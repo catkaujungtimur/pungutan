@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Cetak Otomatis Sarana - Kolom P Q R</title>
+    <title>Sistem Cetak Otomatis Sarana - Auto Tab Bulan</title>
     <style>
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
@@ -203,10 +203,25 @@
                 <label for="spreadsheet-id-input">Google Spreadsheet ID (CATKA 2026)</label>
                 <input type="text" id="spreadsheet-id-input" placeholder="Masukkan ID Spreadsheet di sini...">
             </div>
+            
             <div class="form-group">
-                <label for="sheet-name-input">Nama Sheet / Tab</label>
-                <input type="text" id="sheet-name-input" value="Sheet1" style="width: 120px;">
+                <label for="month-select">Pilih Bulan (Tab Sheet)</label>
+                <select id="month-select" onchange="handleMonthChange()">
+                    <option value="Januari">Januari</option>
+                    <option value="Februari">Februari</option>
+                    <option value="Maret">Maret</option>
+                    <option value="April">April</option>
+                    <option value="Mei">Mei</option>
+                    <option value="Juni">Juni</option>
+                    <option value="Juli">Juli</option>
+                    <option value="Agustus">Agustus</option>
+                    <option value="September">September</option>
+                    <option value="Oktober">Oktober</option>
+                    <option value="November">November</option>
+                    <option value="Desember">Desember</option>
+                </select>
             </div>
+            
             <div class="form-group">
                 <button class="btn btn-success" onclick="saveConfigAndReload()">Simpan & Muat Ulang</button>
             </div>
@@ -216,9 +231,9 @@
             <div class="form-group">
                 <label for="date-filter-select">Pilih Hari</label>
                 <select id="date-filter-select" onchange="applyFilters()">
-                    <option value="today">Hari Ini (Sesuai Komputer)</option>
+                    <option value="today" selected>Hari Ini (Sesuai Komputer)</option>
                     <option value="yesterday">Kemarin</option>
-                    <option value="all" selected>Tampilkan Semua Tanggal di Sheet</option>
+                    <option value="all">Tampilkan Semua Tanggal di Sheet</option>
                 </select>
             </div>
 
@@ -261,15 +276,26 @@
 
 <script>
     const DEFAULT_SPREADSHEET_ID = 'MASUKKAN_ID_SPREADSHEET_CADANGAN_DI_SINI';
-    const DEFAULT_SHEET_NAME = 'Sheet1';
+    
+    // Daftar nama bulan dalam Bahasa Indonesia
+    const namaBulan = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+
+    // Fungsi mendapatkan nama bulan saat ini secara otomatis
+    function getCurrentMonthName() {
+        const d = new Date();
+        return namaBulan[d.getMonth()]; 
+    }
 
     let currentSpreadsheetId = localStorage.getItem('user_spreadsheet_id') || DEFAULT_SPREADSHEET_ID;
-    let currentSheetName = localStorage.getItem('user_sheet_name') || DEFAULT_SHEET_NAME;
+    // Set default tab ke bulan saat ini
+    let currentSheetName = localStorage.getItem('user_sheet_name') || getCurrentMonthName();
 
     document.getElementById('spreadsheet-id-input').value = currentSpreadsheetId;
-    document.getElementById('sheet-name-input').value = currentSheetName;
+    document.getElementById('month-select').value = currentSheetName;
 
-    // Database Default KA per Shift
     const defaultShifts = {
         malam: ['279', '293', '211F', '147', '159', '7045A'],
         pagi: ['147', '491', '297', '239F'],
@@ -317,7 +343,7 @@
 
     function loadData() {
         const outputArea = document.getElementById('output-area');
-        outputArea.innerHTML = '<p style="text-align: center; color: #718096;">Sedang menyinkronkan data...</p>';
+        outputArea.innerHTML = `<p style="text-align: center; color: #718096;">Sedang menyinkronkan data bulan <strong>${currentSheetName}</strong>...</p>`;
 
         if (currentSpreadsheetId === 'MASUKKAN_ID_SPREADSHEET_CADANGAN_DI_SINI' || !currentSpreadsheetId) {
             outputArea.innerHTML = `
@@ -340,11 +366,10 @@
             .catch(err => {
                 outputArea.innerHTML = `
                     <div style="text-align: center; color: #e53e3e; padding: 30px;">
-                        <p style="font-weight: bold; margin-bottom: 5px;">Gagal memuat data dari Google Sheets!</p>
-                        <p style="font-size: 13px; color: #718096; margin: 0;">Langkah perbaikan:</p>
+                        <p style="font-weight: bold; margin-bottom: 5px;">Gagal memuat data dari tab "${currentSheetName}"!</p>
+                        <p style="font-size: 13px; color: #718096; margin: 0;">Analisis Penyebab:</p>
                         <ul style="display: inline-block; text-align: left; font-size: 13px; color: #718096;">
-                            <li>Pastikan <strong>Spreadsheet ID</strong> yang dimasukkan sudah benar.</li>
-                            <li>Pastikan nama Tab / Sheet (misal: Sheet1) sesuai dengan yang di excel.</li>
+                            <li>Pastikan nama tab di Spreadsheet kamu ditulis persis seperti <strong>"${currentSheetName}"</strong> (sensitif huruf besar/kecil). Jika nama tab di spreadsheet kamu menggunakan tahun (misal: "Mei 2026"), silakan ganti nama tab tersebut di Spreadsheet menjadi hanya "Mei" atau kabari saya agar disesuaikan kodenya.</li>
                             <li>Pastikan spreadsheet telah dibagikan dengan akses <strong>"Siapa saja yang memiliki link bisa melihat (Viewer)"</strong>.</li>
                         </ul>
                     </div>
@@ -353,9 +378,16 @@
             });
     }
 
+    function handleMonthChange() {
+        const selectedMonth = document.getElementById('month-select').value;
+        currentSheetName = selectedMonth;
+        localStorage.setItem('user_sheet_name', selectedMonth);
+        loadData();
+    }
+
     function saveConfigAndReload() {
         const newId = document.getElementById('spreadsheet-id-input').value.trim();
-        const newSheetName = document.getElementById('sheet-name-input').value.trim();
+        const selectedMonth = document.getElementById('month-select').value;
 
         if (!newId) {
             alert('Spreadsheet ID tidak boleh kosong!');
@@ -363,12 +395,12 @@
         }
 
         localStorage.setItem('user_spreadsheet_id', newId);
-        localStorage.setItem('user_sheet_name', newSheetName);
+        localStorage.setItem('user_sheet_name', selectedMonth);
 
         currentSpreadsheetId = newId;
-        currentSheetName = newSheetName;
+        currentSheetName = selectedMonth;
 
-        alert('Pengaturan berhasil disimpan! Memuat ulang data...');
+        alert('Pengaturan disimpan! Memuat ulang data...');
         loadData();
     }
 
@@ -383,10 +415,9 @@
         rows.forEach((row, idx) => {
             if (idx === 0) return; 
 
-            // MEMETAKAN BERDASARKAN KOLOM P, Q, R YANG FIX
-            const tanggal = row[15]; // Kolom P (indeks 15)
-            const stn = row[16];     // Kolom Q (indeks 16)
-            const noKA = row[17];    // Kolom R (indeks 17)
+            const tanggal = row[15]; // Kolom P
+            const stn = row[16];     // Kolom Q
+            const noKA = row[17];    // Kolom R
 
             if (tanggal && noKA) {
                 if (currentTrain) {
@@ -403,7 +434,7 @@
                     noLok: row[7] || '-',
                     saranaList: []
                 };
-            } else if (currentTrain && row[8]) { // Sarana tetap di Kolom I (indeks 8)
+            } else if (currentTrain && row[8]) { // Sarana di Kolom I (indeks 8)
                 const noSarana = row[8];
                 const status = row[9];
                 const berat = row[10];
@@ -506,7 +537,7 @@
                 <div style="text-align: center; color: #a0aec0; margin-top: 40px; padding: 20px;">
                     <p style="font-style: italic; margin: 0;">Tidak ada data KA yang cocok dengan kriteria filter saat ini.</p>
                     <p style="font-size: 12px; color: #cbd5e0; margin-top: 5px;">
-                        (Mode Aktif: ${dateFilterMode === 'today' ? 'Hari Ini ('+getTodayString()+')' : dateFilterMode === 'yesterday' ? 'Kemarin ('+getYesterdayString()+')' : 'Semua Tanggal'})
+                        (Pencarian aktif pada Tab: <strong>${currentSheetName}</strong> | Mode Tanggal: ${dateFilterMode === 'today' ? 'Hari Ini ('+getTodayString()+')' : dateFilterMode === 'yesterday' ? 'Kemarin ('+getYesterdayString()+')' : 'Semua Tanggal'})
                     </p>
                 </div>
             `;
@@ -584,3 +615,4 @@
 
 </body>
 </html>
+
