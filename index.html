@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Cetak Otomatis Sarana</title>
+    <title>Sistem Cetak Otomatis Sarana - Dinamis</title>
     <style>
-        /* Gaya Tampilan di Layar Komputer */
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
             background-color: #f7fafc;
@@ -17,31 +16,97 @@
             max-width: 1100px;
             margin: 0 auto;
         }
-        .no-print-zone {
+        
+        /* Panel Kontrol / Filter (Sembunyi saat diprint) */
+        .control-panel {
             background-color: #fff;
-            padding: 15px 20px;
+            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             margin-bottom: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
-        .btn-print {
-            background-color: #2b6cb0;
-            color: white;
-            border: none;
-            padding: 10px 20px;
+        .panel-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: flex-end;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .form-group.flex-grow {
+            flex-grow: 1;
+            min-width: 300px;
+        }
+        label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #4a5568;
+        }
+        input, select {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            font-size: 14px;
+            background-color: #fff;
+        }
+        .btn {
+            padding: 9px 15px;
             font-size: 14px;
             font-weight: bold;
             border-radius: 5px;
             cursor: pointer;
-            transition: background 0.2s;
+            border: none;
+            transition: all 0.2s;
         }
-        .btn-print:hover {
+        .btn-primary {
+            background-color: #2b6cb0;
+            color: white;
+        }
+        .btn-primary:hover {
             background-color: #2b4c7e;
         }
-        
+        .btn-secondary {
+            background-color: #edf2f7;
+            color: #4a5568;
+            border: 1px solid #cbd5e0;
+        }
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
+        }
+        .btn-success {
+            background-color: #48bb78;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #38a169;
+        }
+
+        /* Badge KA Aktif */
+        .ka-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        .ka-badge {
+            background-color: #e2e8f0;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .ka-badge .remove-btn {
+            cursor: pointer;
+            color: #e53e3e;
+        }
+
         /* Desain Blok Kereta */
         .train-block {
             background: #fff;
@@ -50,7 +115,7 @@
             margin-bottom: 30px;
             overflow: hidden;
             box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-            page-break-inside: avoid; /* Mencegah blok terpotong di tengah halaman */
+            page-break-inside: avoid;
         }
         .train-summary {
             background-color: #ebf8ff;
@@ -68,7 +133,7 @@
             font-size: 15px;
         }
 
-        /* Desain Tabel Susunan Rangkaian */
+        /* Desain Tabel */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -103,15 +168,15 @@
             color: #e53e3e;
         }
 
-        /* CSS KHUSUS SAAT DICETAK (PRINT-FRIENDLY CSS) */
+        /* CSS KHUSUS PRINT */
         @media print {
             body {
                 background-color: #fff;
                 padding: 0;
                 font-size: 11px;
             }
-            .no-print-zone {
-                display: none !important; /* Sembunyikan tombol cetak saat proses print */
+            .control-panel {
+                display: none !important;
             }
             .train-block {
                 border: 1px solid #cbd5e0;
@@ -120,7 +185,7 @@
                 page-break-inside: avoid;
             }
             @page {
-                size: A4 landscape; /* Set ukuran kertas otomatis ke Landscape */
+                size: A4 landscape;
                 margin: 10mm;
             }
         }
@@ -129,68 +194,177 @@
 <body>
 
 <div class="container">
-    <div class="no-print-zone">
-        <div>
-            <h3 style="margin:0; color:#1a365d;">Sistem Sinkronisasi & Cetak Sarana</h3>
-            <span style="font-size:12px; color:#718096;">Mengambil data langsung dari Google Sheets "CATKA 2026"</span>
+    
+    <div class="control-panel">
+        <h3 style="margin: 0 0 15px 0; color: #1a365d;">Sistem Sinkronisasi & Filter Dinasan</h3>
+        
+        <div class="panel-row" style="background-color: #f7fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+            <div class="form-group flex-grow">
+                <label for="spreadsheet-id-input">Google Spreadsheet ID (CATKA 2026)</label>
+                <input type="text" id="spreadsheet-id-input" placeholder="Masukkan ID Spreadsheet di sini...">
+            </div>
+            <div class="form-group">
+                <label for="sheet-name-input">Nama Sheet / Tab</label>
+                <input type="text" id="sheet-name-input" value="Sheet1" style="width: 120px;">
+            </div>
+            <div class="form-group">
+                <button class="btn btn-success" onclick="saveConfigAndReload()">Simpan & Muat Ulang</button>
+            </div>
         </div>
-        <button class="btn-print" onclick="window.print()">Cetak Halaman (A4 Landscape)</button>
+
+        <div class="panel-row">
+            <div class="form-group">
+                <label for="start-date">Dari Tanggal</label>
+                <input type="text" id="start-date" placeholder="DD/MM/YY atau DD/M/YY">
+            </div>
+            <div class="form-group">
+                <label for="end-date">Sampai Tanggal</label>
+                <input type="text" id="end-date" placeholder="DD/MM/YY atau DD/M/YY">
+            </div>
+
+            <div class="form-group">
+                <label for="shift-select">Pungutan Dinasan</label>
+                <select id="shift-select" onchange="handleShiftChange()">
+                    <option value="malam">Dinas Malam</option>
+                    <option value="pagi">Dinas Pagi</option>
+                    <option value="siang">Dinas Siang</option>
+                    <option value="semua">Tampilkan Semua KA</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <button class="btn btn-primary" onclick="window.print()">Cetak (A4 Landscape)</button>
+            </div>
+        </div>
+
+        <div class="panel-row" style="border-top: 1px solid #edf2f7; padding-top: 15px;">
+            <div class="form-group">
+                <label for="manual-ka-input">Tambah KA Manual ke Daftar Filter</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="manual-ka-input" placeholder="Contoh: 112F atau 84">
+                    <button class="btn btn-secondary" onclick="addManualKA()">Tambah</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Daftar KA yang akan ditampilkan:</label>
+            <div id="active-ka-list" class="ka-badges">
+                </div>
+        </div>
     </div>
 
     <div id="output-area">
-        <p style="text-align: center; color: #718096;">Sedang menyinkronkan data dari Google Sheets...</p>
+        <p style="text-align: center; color: #718096;">Menghubungkan ke Google Sheets...</p>
     </div>
 </div>
 
 <script>
-    // GANTI TULISAN DI BAWAH INI DENGAN ID SPREADSHEET KAMU YANG SEBENARNYA
-    const SPREADSHEET_ID = '13s5efhiGPkPwCpTqDBfmUD76IGQJLlMm6sO19RS8Iss'; 
-    const SHEET_NAME = 'CATKA 2026'; // SesuaikanCATKA dengan nama sheet/tab di google sheets kamu
+    // ID Default pertama kali sebelum diubah (Ganti dengan ID milikmu sebagai default dasar)
+    const DEFAULT_SPREADSHEET_ID = 'MASUKKAN_ID_SPREADSHEET_CADANGAN_DI_SINI';
+    const DEFAULT_SHEET_NAME = 'Sheet1';
 
-    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
+    // Ambil data dari penyimpanan browser (localStorage) jika ada
+    let currentSpreadsheetId = localStorage.getItem('user_spreadsheet_id') || DEFAULT_SPREADSHEET_ID;
+    let currentSheetName = localStorage.getItem('user_sheet_name') || DEFAULT_SHEET_NAME;
 
-    fetch(url)
-        .then(res => res.text())
-        .then(csvText => {
-            // Parsing CSV sederhana ke baris & kolom
-            const rows = csvText.split('\n').map(row => {
-                // Menghapus tanda kutip ganda pembungkus teks dari Google Sheets
-                return row.split(',').map(cell => cell.replace(/^"(.*)"$/, '$1').trim());
-            });
+    // Masukkan nilai yang tersimpan ke kotak input di halaman depan
+    document.getElementById('spreadsheet-id-input').value = currentSpreadsheetId;
+    document.getElementById('sheet-name-input').value = currentSheetName;
 
-            renderData(rows);
-        })
-        .catch(err => {
-            document.getElementById('output-area').innerHTML = `
-                <p style="text-align: center; color: #e53e3e; font-weight: bold;">
-                    Gagal mengambil data. Pastikan ID Spreadsheet sudah benar dan akses telah dibuka untuk publik.
-                </p>
+    // Database Default KA per Shift
+    const defaultShifts = {
+        malam: ['279', '293', '211F', '147', '159', '7045A'],
+        pagi: ['147', '491', '297', '239F'],
+        siang: ['239F', '209', '493', '279', '249'],
+        semua: []
+    };
+
+    // State Aplikasi
+    let allParsedData = [];
+    let currentFilteredKA = [...defaultShifts.malam];
+    let availableDates = [];
+
+    // Fungsi mengambil data dari API Google CSV
+    function loadData() {
+        const outputArea = document.getElementById('output-area');
+        outputArea.innerHTML = '<p style="text-align: center; color: #718096;">Sedang menyinkronkan data...</p>';
+
+        if (currentSpreadsheetId === 'MASUKKAN_ID_SPREADSHEET_CADANGAN_DI_SINI' || !currentSpreadsheetId) {
+            outputArea.innerHTML = `
+                <div style="text-align: center; color: #4a5568; padding: 40px 0;">
+                    <h3>Sistem Siap!</h3>
+                    <p>Silakan masukkan <strong>Google Spreadsheet ID</strong> pada kolom di atas, lalu klik <strong>"Simpan & Muat Ulang"</strong>.</p>
+                </div>
             `;
-            console.error(err);
+            return;
+        }
+
+        const url = `https://docs.google.com/spreadsheets/d/${currentSpreadsheetId}/gviz/tq?tqx=out:csv&sheet=${currentSheetName}`;
+
+        fetch(url)
+            .then(res => res.text())
+            .then(csvText => {
+                parseCSV(csvText);
+                initApp();
+            })
+            .catch(err => {
+                outputArea.innerHTML = `
+                    <div style="text-align: center; color: #e53e3e; padding: 30px;">
+                        <p style="font-weight: bold; margin-bottom: 5px;">Gagal memuat data dari Google Sheets!</p>
+                        <p style="font-size: 13px; color: #718096; margin: 0;">Langkah perbaikan:</p>
+                        <ul style="display: inline-block; text-align: left; font-size: 13px; color: #718096;">
+                            <li>Pastikan <strong>Spreadsheet ID</strong> yang dimasukkan sudah benar.</li>
+                            <li>Pastikan nama Tab / Sheet (misal: Sheet1) sesuai dengan yang di excel.</li>
+                            <li>Pastikan spreadsheet telah dibagikan dengan akses <strong>"Siapa saja yang memiliki link bisa melihat (Viewer)"</strong>.</li>
+                        </ul>
+                    </div>
+                `;
+                console.error(err);
+            });
+    }
+
+    // Fungsi menyimpan konfigurasi dari halaman depan
+    function saveConfigAndReload() {
+        const newId = document.getElementById('spreadsheet-id-input').value.trim();
+        const newSheetName = document.getElementById('sheet-name-input').value.trim();
+
+        if (!newId) {
+            alert('Spreadsheet ID tidak boleh kosong!');
+            return;
+        }
+
+        // Menyimpan permanen di browser komputer lokal
+        localStorage.setItem('user_spreadsheet_id', newId);
+        localStorage.setItem('user_sheet_name', newSheetName);
+
+        currentSpreadsheetId = newId;
+        currentSheetName = newSheetName;
+
+        alert('Pengaturan berhasil disimpan! Memuat ulang data...');
+        loadData();
+    }
+
+    function parseCSV(csvText) {
+        // Pemecahan per baris
+        const rows = csvText.split('\n').map(row => {
+            return row.split(',').map(cell => cell.replace(/^"(.*)"$/, '$1').trim());
         });
 
-    function renderData(rows) {
-        const outputArea = document.getElementById('output-area');
-        outputArea.innerHTML = ''; // Kosongkan loader
-
-        // Di sini kita akan mendeteksi baris-baris data dari sheet.
-        // Karena struktur tabel di sheet kamu memiliki header dinas di baris pertama tiap blok,
-        // kita bisa mendeteksinya berdasarkan keberadaan tanggal di kolom pertama (indeks 0).
-        
         let currentTrain = null;
-        let trainBlocks = [];
+        allParsedData = [];
+        availableDates = [];
 
         rows.forEach((row, idx) => {
-            if (idx === 0) return; // Lewati header utama sheet jika ada
+            if (idx === 0) return; 
 
-            const tanggal = row[0]; // Kolom A
-            const stn = row[1];     // Kolom B
-            const noKA = row[2];    // Kolom C
+            const tanggal = row[0]; 
+            const stn = row[1];     
+            const noKA = row[2];    
 
-            // Jika ada baris baru yang memiliki No KA (Kolom C tidak kosong), berarti ini awal blok kereta baru
             if (tanggal && noKA) {
                 if (currentTrain) {
-                    trainBlocks.push(currentTrain);
+                    allParsedData.push(currentTrain);
                 }
                 currentTrain = {
                     tanggal: tanggal,
@@ -203,7 +377,10 @@
                     noLok: row[7] || '-',
                     saranaList: []
                 };
-            } else if (currentTrain && row[8]) { // Jika masih di blok yang sama dan nomor sarana (Kolom I) ada isinya
+                if (!availableDates.includes(tanggal)) {
+                    availableDates.push(tanggal);
+                }
+            } else if (currentTrain && row[8]) { 
                 const noSarana = row[8];
                 const status = row[9];
                 const berat = row[10];
@@ -222,16 +399,97 @@
             }
         });
 
-        // Masukkan blok terakhir
         if (currentTrain) {
-            trainBlocks.push(currentTrain);
+            allParsedData.push(currentTrain);
+        }
+    }
+
+    function initApp() {
+        if (availableDates.length > 0) {
+            const lastDate = availableDates[availableDates.length - 1];
+            document.getElementById('start-date').value = lastDate;
+            document.getElementById('end-date').value = lastDate;
         }
 
-        // Generate HTML untuk masing-masing blok kereta
-        trainBlocks.forEach(train => {
+        // Reset Event Listener agar tidak double saat ganti ID
+        document.getElementById('start-date').removeEventListener('input', applyFilters);
+        document.getElementById('start-date').addEventListener('input', applyFilters);
+        
+        document.getElementById('end-date').removeEventListener('input', applyFilters);
+        document.getElementById('end-date').addEventListener('input', applyFilters);
+
+        updateKABadges();
+        applyFilters();
+    }
+
+    function handleShiftChange() {
+        const selectedShift = document.getElementById('shift-select').value;
+        currentFilteredKA = [...defaultShifts[selectedShift]];
+        updateKABadges();
+        applyFilters();
+    }
+
+    function addManualKA() {
+        const inputEl = document.getElementById('manual-ka-input');
+        const value = inputEl.value.trim().toUpperCase();
+        if (value && !currentFilteredKA.includes(value)) {
+            currentFilteredKA.push(value);
+            inputEl.value = '';
+            updateKABadges();
+            applyFilters();
+        }
+    }
+
+    function removeKA(kaNumber) {
+        currentFilteredKA = currentFilteredKA.filter(ka => ka !== kaNumber);
+        updateKABadges();
+        applyFilters();
+    }
+
+    function updateKABadges() {
+        const container = document.getElementById('active-ka-list');
+        const selectedShift = document.getElementById('shift-select').value;
+
+        if (selectedShift === 'semua') {
+            container.innerHTML = '<span style="color:#718096; font-size:12px; font-style:italic;">Menampilkan semua nomor KA tanpa batasan.</span>';
+            return;
+        }
+
+        container.innerHTML = '';
+        currentFilteredKA.forEach(ka => {
+            container.innerHTML += `
+                <div class="ka-badge">
+                    KA ${ka}
+                    <span class="remove-btn" onclick="removeKA('${ka}')">&times;</span>
+                </div>
+            `;
+        });
+    }
+
+    function applyFilters() {
+        const startDateVal = document.getElementById('start-date').value.trim();
+        const endDateVal = document.getElementById('end-date').value.trim();
+        const selectedShift = document.getElementById('shift-select').value;
+
+        const outputArea = document.getElementById('output-area');
+        outputArea.innerHTML = '';
+
+        const filteredData = allParsedData.filter(train => {
+            const matchStartDate = startDateVal ? train.tanggal === startDateVal : true;
+            const matchEndDate = endDateVal ? train.tanggal === endDateVal : true;
+            const matchKA = selectedShift === 'semua' ? true : currentFilteredKA.includes(train.noKA.toUpperCase());
+
+            return matchStartDate && matchEndDate && matchKA;
+        });
+
+        if (filteredData.length === 0) {
+            outputArea.innerHTML = '<p style="text-align: center; color: #a0aec0; font-style: italic; margin-top: 40px;">Tidak ada data KA yang cocok dengan kriteria filter saat ini.</p>';
+            return;
+        }
+
+        filteredData.forEach(train => {
             let saranaRows = '';
             
-            // Tambahkan baris Lokomotif terlebih dahulu di atas rangkaian
             saranaRows += `
                 <tr>
                     <td>-</td>
@@ -243,7 +501,6 @@
                 </tr>
             `;
 
-            // Tambahkan daftar rangkaian gerbong/kereta penumpang
             train.saranaList.forEach((sarana, index) => {
                 const isStatusD = sarana.status === 'D' ? 'class="status-d"' : '';
                 saranaRows += `
@@ -295,6 +552,9 @@
             outputArea.innerHTML += blockHTML;
         });
     }
+
+    // Jalankan sinkronisasi data pertama kali saat web dibuka
+    loadData();
 </script>
 
 </body>
