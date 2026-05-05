@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Cetak Ringkas Sarana</title>
+    <title>Sistem Cetak Ringkas Sarana - Fix Rangkaian</title>
     <style>
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
@@ -112,10 +112,11 @@
             background: #fff;
             border: 1px solid #cbd5e0;
             border-radius: 6px;
-            /* Memberi jarak/spasi pemisah yang cukup di bawah setiap blok KA */
-            margin-bottom: 40px; 
+            /* Margin bottom untuk spasi pemisah antar KA di layar */
+            margin-bottom: 50px; 
             overflow: hidden;
             page-break-inside: avoid;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .train-header-simple {
             background-color: #edf2f7;
@@ -170,6 +171,7 @@
         }
         .text-red {
             color: #e53e3e;
+            font-weight: bold;
         }
 
         /* CSS KHUSUS PRINT */
@@ -185,8 +187,8 @@
             .train-block {
                 border: 1px solid #000;
                 box-shadow: none;
-                /* Spasi pemisah fisik saat dicetak di kertas */
-                margin-bottom: 50px; 
+                /* Jarak pemisah fisik saat dicetak di kertas */
+                margin-bottom: 60px; 
                 page-break-inside: avoid;
             }
             th {
@@ -204,7 +206,7 @@
                 print-color-adjust: exact;
             }
             @page {
-                size: A4 portrait; /* Diubah ke Portrait karena kolom sudah sangat ringkas */
+                size: A4 portrait;
                 margin: 15mm 10mm;
             }
         }
@@ -291,7 +293,6 @@
 <script>
     const DEFAULT_SPREADSHEET_ID = 'MASUKKAN_ID_SPREADSHEET_CADANGAN_DI_SINI';
     
-    // Format nama bulan di Google Sheet kamu (JAN 2026, FEB 2026, dst.)
     const formatTabBulan = [
         "JAN 2026", "FEB 2026", "MAR 2026", "APR 2026", "MEI 2026", "JUNI 2026", "JULI 2026"
     ];
@@ -311,7 +312,6 @@
     document.getElementById('spreadsheet-id-input').value = currentSpreadsheetId;
     document.getElementById('month-select').value = currentSheetName;
 
-    // Database Default KA per Shift
     const defaultShifts = {
         malam: ['279', '293', '211F', '147', '159', '7045A'],
         pagi: ['147', '491', '297', '239F'],
@@ -385,8 +385,8 @@
                         <p style="font-weight: bold; margin-bottom: 5px;">Gagal memuat data dari tab "${currentSheetName}"!</p>
                         <p style="font-size: 13px; color: #718096; margin: 0;">Solusi perbaikan:</p>
                         <ul style="display: inline-block; text-align: left; font-size: 13px; color: #718096;">
-                            <li>Pastikan penulisan nama tab di Spreadsheet kamu sama persis dengan yang dipilih (misal: <strong>"${currentSheetName}"</strong>).</li>
-                            <li>Pastikan pengaturan akses "Akses Umum" spreadsheet kamu diatur ke <strong>"Siapa saja yang memiliki link"</strong> sebagai <strong>"Pelihat (Viewer)"</strong>.</li>
+                            <li>Pastikan penulisan nama tab di Spreadsheet kamu sama persis (misal: <strong>"${currentSheetName}"</strong>).</li>
+                            <li>Pastikan akses umum telah diatur ke <strong>"Siapa saja yang memiliki link"</strong> sebagai <strong>"Pelihat (Viewer)"</strong>.</li>
                         </ul>
                     </div>
                 `;
@@ -425,8 +425,9 @@
             return row.split(',').map(cell => cell.replace(/^"(.*)"$/, '$1').trim());
         });
 
-        let currentTrain = null;
         allParsedData = [];
+        let currentTrain = null;
+        let isCollecting = false; // Flag untuk mengontrol pembatasan pembacaan kereta
 
         rows.forEach((row, idx) => {
             if (idx === 0) return; 
@@ -435,7 +436,7 @@
             const stn = row[16];     // Kolom Q
             const noKA = row[17];    // Kolom R
 
-            // Jika menemukan baris awal KA baru
+            // JIKA MENEMUKAN BARIS AWAL KA BARU
             if (tanggal && noKA && tanggal !== "TANGGAL") {
                 if (currentTrain) {
                     allParsedData.push(currentTrain);
@@ -444,18 +445,23 @@
                     tanggal: tanggal,
                     stn: stn,
                     noKA: noKA,
-                    noLok: row[22] || '-',      // Kolom W (Lokomotif utama sebaris KA)
+                    noLok: row[22] || '-',      // Kolom W (Lokomotif utama)
                     saranaList: [],
                     totalTonase: '-'
                 };
-            } else if (currentTrain && row[23]) { // Membaca baris sarana di Kolom X
-                const noSarana = row[23];
+                isCollecting = true; // Mulai mengumpulkan sarana untuk KA ini
+            } 
+            // MEMBACA BARIS SARANA DI BAWAHNYA (HANYA JIKA SEDANG DALAM PENGUMPULAN)
+            else if (currentTrain && isCollecting && row[23]) { 
+                const noSarana = row[23];        // Kolom X
                 const status = row[24];          // Kolom Y (TM)
                 const berat = row[25];           // Kolom Z (Ton)
                 const catatan = row[26] || '';    // Kolom AA (Keterangan)
 
+                // LOGIKA EMAS: JIKA MENEMUKAN KATA 'TONASE', KUNCI DATA DAN STOP BACA UNTUK KA INI!
                 if (noSarana === 'TONASE') {
                     currentTrain.totalTonase = berat;
+                    isCollecting = false; // Set flag ke false agar baris-baris kosong/kereta lain di bawahnya tidak terbawa!
                 } else {
                     currentTrain.saranaList.push({
                         noSarana: noSarana,
@@ -467,6 +473,7 @@
             }
         });
 
+        // Push sisa data terakhir jika ada
         if (currentTrain) {
             allParsedData.push(currentTrain);
         }
@@ -559,7 +566,7 @@
             let saranaRows = '';
             let urut = 1;
 
-            // 1. Lokomotif diletakkan di urutan pertama (sebaris dengan judul KA/Tanggal)
+            // 1. Lokomotif diletakkan di urutan pertama
             if (train.noLok && train.noLok !== '-') {
                 saranaRows += `
                     <tr>
@@ -586,7 +593,6 @@
                 `;
             });
 
-            // Menyusun struktur blok KA yang ringkas
             const blockHTML = `
                 <div class="train-block">
                     <div class="train-header-simple">
