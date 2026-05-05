@@ -260,7 +260,7 @@
 </div>
 
 <script>
-    // ID Default pertama kali sebelum diubah (Ganti dengan ID milikmu sebagai default dasar)
+    // ID Default pertama kali sebelum diubah
     const DEFAULT_SPREADSHEET_ID = 'MASUKKAN_ID_SPREADSHEET_CADANGAN_DI_SINI';
     const DEFAULT_SHEET_NAME = 'Sheet1';
 
@@ -300,7 +300,7 @@
             return;
         }
 
-        const url = `https://docs.google.com/spreadsheets/d/${currentSpreadsheetId}/gviz/tq?tqx=out:csv&sheet=${currentSheetName}`;
+        const url = `https://docs.google.com/spreadsheets/d/${currentSpreadsheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(currentSheetName)}`;
 
         fetch(url)
             .then(res => res.text())
@@ -334,7 +334,6 @@
             return;
         }
 
-        // Menyimpan permanen di browser komputer lokal
         localStorage.setItem('user_spreadsheet_id', newId);
         localStorage.setItem('user_sheet_name', newSheetName);
 
@@ -346,7 +345,7 @@
     }
 
     function parseCSV(csvText) {
-        // Pemecahan per baris
+        // PERBAIKAN: Pemecahan baris yang benar menggunakan '\n'
         const rows = csvText.split('\n').map(row => {
             return row.split(',').map(cell => cell.replace(/^"(.*)"$/, '$1').trim());
         });
@@ -411,7 +410,6 @@
             document.getElementById('end-date').value = lastDate;
         }
 
-        // Reset Event Listener agar tidak double saat ganti ID
         document.getElementById('start-date').removeEventListener('input', applyFilters);
         document.getElementById('start-date').addEventListener('input', applyFilters);
         
@@ -553,7 +551,7 @@
         });
     }
 
-    // Jalankan sinkronisasi data pertama kali saat web dibuka
+    // Jalankan pertama kali saat halaman dibuka
     loadData();
 </script>
 
