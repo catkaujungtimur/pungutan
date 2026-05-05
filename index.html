@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Cetak Otomatis Sarana - Presisi KTG</title>
+    <title>Sistem Cetak Ringkas Sarana</title>
     <style>
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
@@ -13,7 +13,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1100px;
+            max-width: 900px;
             margin: 0 auto;
         }
         
@@ -107,33 +107,36 @@
             color: #e53e3e;
         }
 
-        /* Desain Blok Kereta */
+        /* Desain Blok Kereta Sederhana */
         .train-block {
             background: #fff;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #cbd5e0;
             border-radius: 6px;
-            margin-bottom: 30px;
+            /* Memberi jarak/spasi pemisah yang cukup di bawah setiap blok KA */
+            margin-bottom: 40px; 
             overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
             page-break-inside: avoid;
         }
-        .train-summary {
-            background-color: #ebf8ff;
-            border-bottom: 2px solid #bee3f8;
-            padding: 12px 15px;
+        .train-header-simple {
+            background-color: #edf2f7;
+            border-bottom: 2px solid #cbd5e0;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            font-size: 13px;
+        .train-header-simple h4 {
+            margin: 0;
+            font-size: 16px;
+            color: #2d3748;
         }
-        .summary-item strong {
-            color: #2b6cb0;
-            font-size: 15px;
+        .train-header-simple .train-date {
+            font-weight: bold;
+            color: #4a5568;
+            font-size: 14px;
         }
 
-        /* Desain Tabel */
+        /* Desain Tabel Ringkas */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -141,18 +144,18 @@
         }
         th {
             background-color: #f7fafc;
-            color: #4a5568;
+            color: #2d3748;
             font-weight: bold;
             text-transform: uppercase;
             font-size: 11px;
             letter-spacing: 0.5px;
-            padding: 10px;
-            border-bottom: 2px solid #e2e8f0;
+            padding: 8px 10px;
+            border-bottom: 2px solid #cbd5e0;
             text-align: center;
         }
         td {
             padding: 8px 10px;
-            border-bottom: 1px solid #edf2f7;
+            border-bottom: 1px solid #e2e8f0;
             text-align: center;
         }
         .status-d {
@@ -163,6 +166,7 @@
         .tonase-row {
             background-color: #f7fafc;
             font-weight: bold;
+            border-bottom: none;
         }
         .text-red {
             color: #e53e3e;
@@ -179,14 +183,29 @@
                 display: none !important;
             }
             .train-block {
-                border: 1px solid #cbd5e0;
+                border: 1px solid #000;
                 box-shadow: none;
-                margin-bottom: 20px;
+                /* Spasi pemisah fisik saat dicetak di kertas */
+                margin-bottom: 50px; 
                 page-break-inside: avoid;
             }
+            th {
+                border-bottom: 2px solid #000;
+                background-color: #f0f0f0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            td {
+                border-bottom: 1px solid #ccc;
+            }
+            .tonase-row {
+                background-color: #f0f0f0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
             @page {
-                size: A4 landscape;
-                margin: 10mm;
+                size: A4 portrait; /* Diubah ke Portrait karena kolom sudah sangat ringkas */
+                margin: 15mm 10mm;
             }
         }
     </style>
@@ -243,7 +262,7 @@
             </div>
 
             <div class="form-group">
-                <button class="btn btn-primary" onclick="window.print()">Cetak (A4 Landscape)</button>
+                <button class="btn btn-primary" onclick="window.print()">Cetak Halaman</button>
             </div>
         </div>
 
@@ -279,11 +298,11 @@
 
     function getCurrentMonthTabName() {
         const d = new Date();
-        const monthIndex = d.getMonth(); // 0 = Jan, 4 = Mei
+        const monthIndex = d.getMonth();
         if (monthIndex < formatTabBulan.length) {
             return formatTabBulan[monthIndex];
         }
-        return "MEI 2026"; // Fallback aman
+        return "MEI 2026";
     }
 
     let currentSpreadsheetId = localStorage.getItem('user_spreadsheet_id') || DEFAULT_SPREADSHEET_ID;
@@ -305,7 +324,6 @@
 
     function normalizeDate(dateStr) {
         if (!dateStr) return '';
-        // Mengubah format seperti "01/5/26" atau "01/05/2026" atau "01-05-2026" menjadi standar "1/5/2026"
         let clean = dateStr.replace(/-/g, '/').trim();
         let parts = clean.split('/');
         
@@ -317,8 +335,6 @@
 
         if (year.length === 2) {
             year = '20' + year;
-        } else if (year.length === 4 && year.startsWith('20')) {
-            year = year;
         }
 
         return `${day}/${month}/${year}`;
@@ -370,7 +386,7 @@
                         <p style="font-size: 13px; color: #718096; margin: 0;">Solusi perbaikan:</p>
                         <ul style="display: inline-block; text-align: left; font-size: 13px; color: #718096;">
                             <li>Pastikan penulisan nama tab di Spreadsheet kamu sama persis dengan yang dipilih (misal: <strong>"${currentSheetName}"</strong>).</li>
-                            <li>Pastikan pengaturan akses "Akses Umum" spreadsheet kamu diatur ke <strong>"Siapa saja yang memiliki link"</strong> sebagai <strong>"Pelihat (Viewer)"</strong> seperti di gambar.</li>
+                            <li>Pastikan pengaturan akses "Akses Umum" spreadsheet kamu diatur ke <strong>"Siapa saja yang memiliki link"</strong> sebagai <strong>"Pelihat (Viewer)"</strong>.</li>
                         </ul>
                     </div>
                 `;
@@ -415,11 +431,11 @@
         rows.forEach((row, idx) => {
             if (idx === 0) return; 
 
-            // PEMETAAN KOLOM BARU YANG DIAMBIL DARI TANGKAPAN LAYAR HP
-            const tanggal = row[15]; // Kolom P (indeks 15)
-            const stn = row[16];     // Kolom Q (indeks 16)
-            const noKA = row[17];    // Kolom R (indeks 17)
+            const tanggal = row[15]; // Kolom P
+            const stn = row[16];     // Kolom Q
+            const noKA = row[17];    // Kolom R
 
+            // Jika menemukan baris awal KA baru
             if (tanggal && noKA && tanggal !== "TANGGAL") {
                 if (currentTrain) {
                     allParsedData.push(currentTrain);
@@ -428,18 +444,15 @@
                     tanggal: tanggal,
                     stn: stn,
                     noKA: noKA,
-                    masinis: row[18] || '-',    // Kolom S (indeks 18)
-                    asisten: row[19] || '-',    // Kolom T (indeks 19)
-                    konduktur: row[20] || '-',  // Kolom U (indeks 20)
-                    t2: row[21] || '-',         // Kolom V (TKA di indeks 21)
-                    noLok: row[22] || '-',      // Kolom W (indeks 22)
-                    saranaList: []
+                    noLok: row[22] || '-',      // Kolom W (Lokomotif utama sebaris KA)
+                    saranaList: [],
+                    totalTonase: '-'
                 };
-            } else if (currentTrain && row[23]) { // Sarana di Kolom X (indeks 23)
+            } else if (currentTrain && row[23]) { // Membaca baris sarana di Kolom X
                 const noSarana = row[23];
-                const status = row[24];          // Kolom Y (indeks 24)
-                const berat = row[25];           // Kolom Z (indeks 25)
-                const catatan = row[26] || '';    // Kolom AA (indeks 26)
+                const status = row[24];          // Kolom Y (TM)
+                const berat = row[25];           // Kolom Z (Ton)
+                const catatan = row[26] || '';    // Kolom AA (Keterangan)
 
                 if (noSarana === 'TONASE') {
                     currentTrain.totalTonase = berat;
@@ -537,9 +550,6 @@
             outputArea.innerHTML = `
                 <div style="text-align: center; color: #a0aec0; margin-top: 40px; padding: 20px;">
                     <p style="font-style: italic; margin: 0;">Tidak ada data KA yang cocok dengan kriteria filter saat ini.</p>
-                    <p style="font-size: 12px; color: #cbd5e0; margin-top: 5px;">
-                        (Pencarian aktif pada Tab: <strong>${currentSheetName}</strong> | Mode Tanggal: ${dateFilterMode === 'today' ? 'Hari Ini ('+getTodayString()+')' : dateFilterMode === 'yesterday' ? 'Kemarin ('+getYesterdayString()+')' : 'Semua Tanggal'})
-                    </p>
                 </div>
             `;
             return;
@@ -547,61 +557,58 @@
 
         filteredData.forEach(train => {
             let saranaRows = '';
-            
-            saranaRows += `
-                <tr>
-                    <td>-</td>
-                    <td>Lokomotif</td>
-                    <td><strong>${train.noLok}</strong></td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td style="text-align: left; font-style: italic; color:#718096;">Pemeriksaan sarana lokomotif dinas.</td>
-                </tr>
-            `;
+            let urut = 1;
 
-            train.saranaList.forEach((sarana, index) => {
+            // 1. Lokomotif diletakkan di urutan pertama (sebaris dengan judul KA/Tanggal)
+            if (train.noLok && train.noLok !== '-') {
+                saranaRows += `
+                    <tr>
+                        <td>${urut++}</td>
+                        <td><strong>${train.noLok}</strong></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td style="text-align: left; font-style: italic; color:#718096;">Lokomotif Dinas</td>
+                    </tr>
+                `;
+            }
+
+            // 2. Baris-baris Kereta di bawahnya
+            train.saranaList.forEach(sarana => {
                 const isStatusD = sarana.status === 'D' ? 'class="status-d"' : '';
                 saranaRows += `
                     <tr>
-                        <td>${index + 1}</td>
-                        <td>Sarana Rangkaian</td>
+                        <td>${urut++}</td>
                         <td>${sarana.noSarana}</td>
                         <td ${isStatusD}>${sarana.status}</td>
                         <td>${sarana.berat}</td>
-                        <td style="text-align: left; font-style: italic;">${sarana.catatan}</td>
+                        <td style="text-align: left;">${sarana.catatan}</td>
                     </tr>
                 `;
             });
 
+            // Menyusun struktur blok KA yang ringkas
             const blockHTML = `
                 <div class="train-block">
-                    <div class="train-summary">
-                        <div class="summary-grid">
-                            <div class="summary-item">No. KA: <strong>${train.noKA}</strong> (${train.stn})</div>
-                            <div class="summary-item">Masinis: <strong>${train.masinis}</strong></div>
-                            <div class="summary-item">T2 / Otomasi: <strong>${train.t2}</strong></div>
-                            <div class="summary-item">Tanggal: <strong>${train.tanggal}</strong></div>
-                            <div class="summary-item">Asst. Masinis: <strong>${train.asisten}</strong></div>
-                            <div class="summary-item">Konduktur: <strong>${train.konduktur}</strong></div>
-                        </div>
+                    <div class="train-header-simple">
+                        <h4>KA ${train.noKA} (${train.stn})</h4>
+                        <span class="train-date">${train.tanggal}</span>
                     </div>
                     <table>
                         <thead>
                             <tr>
-                                <th style="width: 7%;">No. Urut</th>
-                                <th style="width: 15%;">Jenis</th>
-                                <th style="width: 25%;">Nomor Sarana</th>
-                                <th style="width: 10%;">Status</th>
-                                <th style="width: 12%;">Berat (Ton)</th>
-                                <th>Catatan Lapangan</th>
+                                <th style="width: 10%;">No Urut</th>
+                                <th style="width: 30%;">Nomor Sarana</th>
+                                <th style="width: 12%;">TM</th>
+                                <th style="width: 15%;">Ton</th>
+                                <th>Keterangan</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${saranaRows}
                             <tr class="tonase-row">
-                                <td colspan="4" style="text-align: right;">TOTAL TONASE RANGKAIAN</td>
-                                <td class="text-red">${train.totalTonase || '-'}</td>
-                                <td></td>
+                                <td colspan="3" style="text-align: right; font-weight: bold; border-top: 2px solid #cbd5e0;">TOTAL TONASE</td>
+                                <td class="text-red" style="font-weight: bold; border-top: 2px solid #cbd5e0;">${train.totalTonase}</td>
+                                <td style="border-top: 2px solid #cbd5e0;"></td>
                             </tr>
                         </tbody>
                     </table>
