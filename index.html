@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Cetak Otomatis Sarana - Deteksi Hari Ini</title>
+    <title>Sistem Cetak Otomatis Sarana - Kolom P Q R</title>
     <style>
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
@@ -218,7 +218,7 @@
                 <select id="date-filter-select" onchange="applyFilters()">
                     <option value="today">Hari Ini (Sesuai Komputer)</option>
                     <option value="yesterday">Kemarin</option>
-                    <option value="all">Tampilkan Semua Tanggal di Sheet</option>
+                    <option value="all" selected>Tampilkan Semua Tanggal di Sheet</option>
                 </select>
             </div>
 
@@ -260,15 +260,12 @@
 </div>
 
 <script>
-    // ID Default sebagai cadangan pertama kali web dibuka
     const DEFAULT_SPREADSHEET_ID = 'MASUKKAN_ID_SPREADSHEET_CADANGAN_DI_SINI';
     const DEFAULT_SHEET_NAME = 'Sheet1';
 
-    // Ambil data dari penyimpanan browser (localStorage) jika ada
     let currentSpreadsheetId = localStorage.getItem('user_spreadsheet_id') || DEFAULT_SPREADSHEET_ID;
     let currentSheetName = localStorage.getItem('user_sheet_name') || DEFAULT_SHEET_NAME;
 
-    // Masukkan nilai yang tersimpan ke kotak input di halaman depan
     document.getElementById('spreadsheet-id-input').value = currentSpreadsheetId;
     document.getElementById('sheet-name-input').value = currentSheetName;
 
@@ -280,42 +277,35 @@
         semua: []
     };
 
-    // State Aplikasi
     let allParsedData = [];
     let currentFilteredKA = [...defaultShifts.malam];
 
-    // Fungsi utilitas untuk menstandarkan format tanggal agar seragam (DD/MM/YY atau DD/MM/YYYY)
     function normalizeDate(dateStr) {
         if (!dateStr) return '';
-        // Bersihkan spasi dan pastikan pemisah berupa slash '/'
         let clean = dateStr.replace(/-/g, '/').trim();
         let parts = clean.split('/');
         
-        if (parts.length !== 3) return clean; // Jika format tidak sesuai, kembalikan teks asli
+        if (parts.length !== 3) return clean;
 
         let day = parseInt(parts[0], 10);
         let month = parseInt(parts[1], 10);
         let year = parts[2];
 
-        // Jadikan tahun 4 digit
         if (year.length === 2) {
             year = '20' + year;
         }
 
-        // Kembalikan format seragam: D/M/YYYY (tanpa angka nol di depan untuk perbandingan yang akurat)
         return `${day}/${month}/${year}`;
     }
 
-    // Fungsi mendapatkan tanggal hari ini dalam format D/M/YYYY
     function getTodayString() {
         const today = new Date();
         const d = today.getDate();
-        const m = today.getMonth() + 1; // Januari = 0
+        const m = today.getMonth() + 1;
         const y = today.getFullYear();
         return `${d}/${m}/${y}`;
     }
 
-    // Fungsi mendapatkan tanggal kemarin dalam format D/M/YYYY
     function getYesterdayString() {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
@@ -325,7 +315,6 @@
         return `${d}/${m}/${y}`;
     }
 
-    // Fungsi mengambil data dari Google Sheets
     function loadData() {
         const outputArea = document.getElementById('output-area');
         outputArea.innerHTML = '<p style="text-align: center; color: #718096;">Sedang menyinkronkan data...</p>';
@@ -364,7 +353,6 @@
             });
     }
 
-    // Fungsi menyimpan konfigurasi
     function saveConfigAndReload() {
         const newId = document.getElementById('spreadsheet-id-input').value.trim();
         const newSheetName = document.getElementById('sheet-name-input').value.trim();
@@ -395,9 +383,10 @@
         rows.forEach((row, idx) => {
             if (idx === 0) return; 
 
-            const tanggal = row[0]; 
-            const stn = row[1];     
-            const noKA = row[2];    
+            // MEMETAKAN BERDASARKAN KOLOM P, Q, R YANG FIX
+            const tanggal = row[15]; // Kolom P (indeks 15)
+            const stn = row[16];     // Kolom Q (indeks 16)
+            const noKA = row[17];    // Kolom R (indeks 17)
 
             if (tanggal && noKA) {
                 if (currentTrain) {
@@ -414,7 +403,7 @@
                     noLok: row[7] || '-',
                     saranaList: []
                 };
-            } else if (currentTrain && row[8]) { 
+            } else if (currentTrain && row[8]) { // Sarana tetap di Kolom I (indeks 8)
                 const noSarana = row[8];
                 const status = row[9];
                 const berat = row[10];
@@ -493,7 +482,6 @@
         const outputArea = document.getElementById('output-area');
         outputArea.innerHTML = '';
 
-        // Tentukan tanggal pembanding berdasarkan mode yang dipilih
         let targetNormalizedDate = '';
         if (dateFilterMode === 'today') {
             targetNormalizedDate = normalizeDate(getTodayString());
@@ -502,14 +490,12 @@
         }
 
         const filteredData = allParsedData.filter(train => {
-            // 1. Filter Tanggal Pintar
             let matchDate = true;
             if (dateFilterMode !== 'all') {
                 const trainNormDate = normalizeDate(train.tanggal);
                 matchDate = (trainNormDate === targetNormalizedDate);
             }
 
-            // 2. Filter Nomor KA
             const matchKA = selectedShift === 'semua' ? true : currentFilteredKA.includes(train.noKA.toUpperCase());
 
             return matchDate && matchKA;
@@ -593,7 +579,6 @@
         });
     }
 
-    // Jalankan sinkronisasi data pertama kali saat web dibuka
     loadData();
 </script>
 
