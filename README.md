@@ -1,0 +1,2 @@
+# pungutan
+print pungutan
