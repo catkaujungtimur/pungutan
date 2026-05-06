@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Cetak Ringkas Sarana - Fix Rangkaian</title>
+    <title>Sistem Cetak Ringkas Sarana - Print Basket</title>
     <style>
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-            background-color: #f7fafc;
+            background-color: #f0f4f8;
             color: #2d3748;
             margin: 0;
             padding: 20px;
         }
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
         }
         
-        /* Panel Kontrol / Filter (Sembunyi saat diprint) */
+        /* PANEL KONTROL (Sembunyi saat diprint) */
         .control-panel {
             background-color: #fff;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             margin-bottom: 25px;
+            border: 1px solid #e2e8f0;
         }
         .panel-row {
             display: flex;
@@ -39,7 +40,7 @@
         }
         .form-group.flex-grow {
             flex-grow: 1;
-            min-width: 300px;
+            min-width: 250px;
         }
         label {
             font-size: 12px;
@@ -61,6 +62,9 @@
             cursor: pointer;
             border: none;
             transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
         .btn-primary {
             background-color: #2b6cb0;
@@ -84,64 +88,130 @@
         .btn-success:hover {
             background-color: #38a169;
         }
-
-        /* Badge KA Aktif */
-        .ka-badges {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 5px;
+        .btn-danger {
+            background-color: #e53e3e;
+            color: white;
         }
-        .ka-badge {
-            background-color: #e2e8f0;
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: bold;
+        .btn-danger:hover {
+            background-color: #c53030;
+        }
+
+        /* SIMULASI KERTAS A4 (PRINT PREVIEW AREA) */
+        .preview-header-bar {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 5px;
+            margin-bottom: 10px;
+            background: #fff;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e0;
         }
-        .ka-badge .remove-btn {
-            cursor: pointer;
-            color: #e53e3e;
+        .preview-title {
+            font-weight: bold;
+            font-size: 14px;
+            color: #2d3748;
+        }
+        .preview-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
-        /* Desain Blok Kereta Sederhana */
+        /* Wadah Kertas A4 */
+        .a4-page {
+            background: white;
+            width: 100%;
+            min-height: 297mm; /* Sesuai rasio A4 */
+            box-sizing: border-box;
+            padding: 20mm 15mm;
+            margin: 0 auto 30px auto;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        /* Ukuran Font Dinamis (Diatur lewat JS) */
+        .font-xs { font-size: 11px !important; }
+        .font-xs table { font-size: 10px !important; }
+        .font-xs td, .font-xs th { padding: 4px 6px !important; }
+
+        .font-sm { font-size: 13px !important; }
+        .font-sm table { font-size: 12px !important; }
+        .font-sm td, .font-sm th { padding: 6px 8px !important; }
+
+        .font-md { font-size: 15px !important; }
+        .font-md table { font-size: 14px !important; }
+        .font-md td, .font-md th { padding: 8px 10px !important; }
+
+        /* BLOK KERETA & STRUKTUR TABEL */
+        .shift-container-block {
+            margin-bottom: 25px;
+            border: 1px dashed #cbd5e0;
+            padding: 15px;
+            border-radius: 6px;
+            position: relative;
+        }
+        .remove-shift-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #fed7d7;
+            color: #c53030;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .remove-shift-btn:hover {
+            background: #feb2b2;
+        }
+
+        .shift-title-banner {
+            font-size: 14px;
+            font-weight: bold;
+            background-color: #2b6cb0;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
         .train-block {
             background: #fff;
             border: 1px solid #cbd5e0;
-            border-radius: 6px;
-            /* Margin bottom untuk spasi pemisah antar KA di layar */
-            margin-bottom: 50px; 
+            border-radius: 4px;
+            margin-bottom: 30px; 
             overflow: hidden;
             page-break-inside: avoid;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .train-header-simple {
-            background-color: #edf2f7;
+            background-color: #f7fafc;
             border-bottom: 2px solid #cbd5e0;
-            padding: 10px 15px;
+            padding: 8px 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         .train-header-simple h4 {
             margin: 0;
-            font-size: 16px;
+            font-size: 14px;
             color: #2d3748;
         }
         .train-header-simple .train-date {
             font-weight: bold;
             color: #4a5568;
-            font-size: 14px;
+            font-size: 12px;
         }
 
-        /* Desain Tabel Ringkas */
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
         }
         th {
             background-color: #f7fafc;
@@ -150,12 +220,10 @@
             text-transform: uppercase;
             font-size: 11px;
             letter-spacing: 0.5px;
-            padding: 8px 10px;
             border-bottom: 2px solid #cbd5e0;
             text-align: center;
         }
         td {
-            padding: 8px 10px;
             border-bottom: 1px solid #e2e8f0;
             text-align: center;
         }
@@ -167,28 +235,46 @@
         .tonase-row {
             background-color: #f7fafc;
             font-weight: bold;
-            border-bottom: none;
         }
         .text-red {
             color: #e53e3e;
             font-weight: bold;
         }
 
-        /* CSS KHUSUS PRINT */
+        /* CSS CETAK PRINT */
         @media print {
             body {
                 background-color: #fff;
                 padding: 0;
-                font-size: 11px;
+                margin: 0;
             }
-            .control-panel {
+            .control-panel, .preview-header-bar, .remove-shift-btn {
                 display: none !important;
+            }
+            .a4-page {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                margin: 0;
+                width: 100%;
+                min-height: auto;
+                background: transparent;
+            }
+            .shift-container-block {
+                border: none;
+                padding: 0;
+                margin-bottom: 30px;
+            }
+            .shift-title-banner {
+                background-color: #000 !important;
+                color: #fff !important;
+                border: 1px solid #000;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
             .train-block {
                 border: 1px solid #000;
-                box-shadow: none;
-                /* Jarak pemisah fisik saat dicetak di kertas */
-                margin-bottom: 60px; 
+                margin-bottom: 40px;
                 page-break-inside: avoid;
             }
             th {
@@ -205,10 +291,6 @@
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
-            @page {
-                size: A4 portrait;
-                margin: 15mm 10mm;
-            }
         }
     </style>
 </head>
@@ -217,27 +299,25 @@
 <div class="container">
     
     <div class="control-panel">
-        <h3 style="margin: 0 0 15px 0; color: #1a365d;">Sistem Sinkronisasi & Filter Dinasan</h3>
+        <h3 style="margin: 0 0 15px 0; color: #1a365d;">Sistem Filter & Keranjang Cetak Sarana</h3>
         
         <div class="panel-row" style="background-color: #f7fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
             <div class="form-group flex-grow">
                 <label for="spreadsheet-id-input">Google Spreadsheet ID (CATKA 2026)</label>
-                <input type="text" id="spreadsheet-id-input" placeholder="Masukkan ID Spreadsheet di sini...">
+                <input type="text" id="spreadsheet-id-input" placeholder="Masukkan ID Spreadsheet...">
             </div>
-            
             <div class="form-group">
                 <label for="month-select">Pilih Bulan (Tab Sheet)</label>
                 <select id="month-select" onchange="handleMonthChange()">
-                    <option value="JAN 2026">Januari (JAN 2026)</option>
-                    <option value="FEB 2026">Februari (FEB 2026)</option>
-                    <option value="MAR 2026">Maret (MAR 2026)</option>
-                    <option value="APR 2026">April (APR 2026)</option>
-                    <option value="MEI 2026">Mei (MEI 2026)</option>
-                    <option value="JUNI 2026">Juni (JUNI 2026)</option>
-                    <option value="JULI 2026">Juli (JULI 2026)</option>
+                    <option value="JAN 2026">Januari</option>
+                    <option value="FEB 2026">Februari</option>
+                    <option value="MAR 2026">Maret</option>
+                    <option value="APR 2026">April</option>
+                    <option value="MEI 2026">Mei</option>
+                    <option value="JUNI 2026">Juni</option>
+                    <option value="JULI 2026">Juli</option>
                 </select>
             </div>
-            
             <div class="form-group">
                 <button class="btn btn-success" onclick="saveConfigAndReload()">Simpan & Muat Ulang</button>
             </div>
@@ -245,65 +325,64 @@
 
         <div class="panel-row">
             <div class="form-group">
-                <label for="date-filter-select">Pilih Hari</label>
-                <select id="date-filter-select" onchange="applyFilters()">
-                    <option value="today" selected>Hari Ini (Sesuai Komputer)</option>
-                    <option value="yesterday">Kemarin</option>
-                    <option value="all">Tampilkan Semua Tanggal di Sheet</option>
-                </select>
+                <label for="target-date">Pilih Tanggal Dinasan</label>
+                <input type="date" id="target-date">
             </div>
 
             <div class="form-group">
-                <label for="shift-select">Pungutan Dinasan</label>
-                <select id="shift-select" onchange="handleShiftChange()">
-                    <option value="malam">Dinas Malam</option>
+                <label for="shift-select">Pilih Shift Dinasan</label>
+                <select id="shift-select">
+                    <option value="malam">Dinas Malam (Malam ini s.d Dini hari esok)</option>
                     <option value="pagi">Dinas Pagi</option>
                     <option value="siang">Dinas Siang</option>
-                    <option value="semua">Tampilkan Semua KA</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <button class="btn btn-primary" onclick="window.print()">Cetak Halaman</button>
+                <button class="btn btn-primary" onclick="addCurrentShiftToBasket()">
+                     ➕ Masukkan Shift ke Lembar Cetak
+                </button>
             </div>
         </div>
 
-        <div class="panel-row" style="border-top: 1px solid #edf2f7; padding-top: 15px;">
-            <div class="form-group">
-                <label for="manual-ka-input">Tambah KA Manual ke Daftar Filter</label>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="manual-ka-input" placeholder="Contoh: 112F atau 84">
-                    <button class="btn btn-secondary" onclick="addManualKA()">Tambah</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>Daftar KA yang akan ditampilkan:</label>
-            <div id="active-ka-list" class="ka-badges">
-                </div>
+        <div style="font-size: 11px; color: #718096; margin-top: 5px;">
+            *Kamu bisa memasukkan shift berkali-kali (misal malam tgl 6, siang tgl 7, pagi tgl 8) untuk digabung dalam satu lembar kertas cetak.
         </div>
     </div>
 
-    <div id="output-area">
-        <p style="text-align: center; color: #718096;">Menghubungkan ke Google Sheets...</p>
+    <div class="preview-header-bar">
+        <span class="preview-title">Visualisasi Lembar Cetak A4</span>
+        <div class="preview-controls">
+            <label style="margin: 0;">Ukuran Font:</label>
+            <select id="font-size-select" onchange="changeFontSize(this.value)">
+                <option value="font-xs">Kecil / Sangat Ringkas</option>
+                <option value="font-sm" selected>Sedang / Standar</option>
+                <option value="font-md">Besar</option>
+            </select>
+            <button class="btn btn-secondary" onclick="window.print()">🖨️ Cetak Sekarang</button>
+            <button class="btn btn-danger" onclick="clearBasket()">🧹 Kosongkan Lembar</button>
+        </div>
     </div>
+
+    <div id="print-area-a4" class="a4-page font-sm">
+        <div id="basket-empty-state" style="text-align: center; padding: 100px 0; color: #a0aec0;">
+            <p style="font-size: 24px; margin-bottom: 5px;">📄</p>
+            <p style="font-style: italic; margin: 0; font-size: 13px;">Belum ada shift yang dimasukkan ke lembar cetak.</p>
+            <p style="font-size: 11px; color: #cbd5e0; margin-top: 5px;">Gunakan panel kontrol di atas untuk menyusun isi kertas cetak harianmu.</p>
+        </div>
+        <div id="basket-content"></div>
+    </div>
+
 </div>
 
 <script>
     const DEFAULT_SPREADSHEET_ID = 'MASUKKAN_ID_SPREADSHEET_CADANGAN_DI_SINI';
-    
-    const formatTabBulan = [
-        "JAN 2026", "FEB 2026", "MAR 2026", "APR 2026", "MEI 2026", "JUNI 2026", "JULI 2026"
-    ];
+    const formatTabBulan = ["JAN 2026", "FEB 2026", "MAR 2026", "APR 2026", "MEI 2026", "JUNI 2026", "JULI 2026"];
 
     function getCurrentMonthTabName() {
         const d = new Date();
         const monthIndex = d.getMonth();
-        if (monthIndex < formatTabBulan.length) {
-            return formatTabBulan[monthIndex];
-        }
-        return "MEI 2026";
+        return monthIndex < formatTabBulan.length ? formatTabBulan[monthIndex] : "MEI 2026";
     }
 
     let currentSpreadsheetId = localStorage.getItem('user_spreadsheet_id') || DEFAULT_SPREADSHEET_ID;
@@ -312,62 +391,31 @@
     document.getElementById('spreadsheet-id-input').value = currentSpreadsheetId;
     document.getElementById('month-select').value = currentSheetName;
 
-    const defaultShifts = {
-        malam: ['279', '293', '211F', '147', '159', '7045A'],
-        pagi: ['147', '491', '297', '239F'],
+    // Set tanggal input default ke HARI INI
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    document.getElementById('target-date').value = `${yyyy}-${mm}-${dd}`;
+
+    // Urutan Kereta Global 24 jam
+    const globalKAOrder = ['211F', '147', '159', '7045A', '7045', '491', '297', '239F', '209', '493', '279', '249', '293'];
+
+    // Pembagian shift dangan
+    const shiftKAPlans = {
+        pagi: ['147', '159', '7045A', '7045', '491', '297', '239F'],
         siang: ['239F', '209', '493', '279', '249'],
-        semua: []
+        malam: {
+            hari_ini: ['279', '249', '293'],
+            esok_hari: ['211F', '147', '159', '7045A', '7045']
+        }
     };
 
     let allParsedData = [];
-    let currentFilteredKA = [...defaultShifts.malam];
-
-    function normalizeDate(dateStr) {
-        if (!dateStr) return '';
-        let clean = dateStr.replace(/-/g, '/').trim();
-        let parts = clean.split('/');
-        
-        if (parts.length !== 3) return clean;
-
-        let day = parseInt(parts[0], 10);
-        let month = parseInt(parts[1], 10);
-        let year = parts[2];
-
-        if (year.length === 2) {
-            year = '20' + year;
-        }
-
-        return `${day}/${month}/${year}`;
-    }
-
-    function getTodayString() {
-        const today = new Date();
-        const d = today.getDate();
-        const m = today.getMonth() + 1;
-        const y = today.getFullYear();
-        return `${d}/${m}/${y}`;
-    }
-
-    function getYesterdayString() {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const d = yesterday.getDate();
-        const m = yesterday.getMonth() + 1;
-        const y = yesterday.getFullYear();
-        return `${d}/${m}/${y}`;
-    }
+    let printBasket = []; // Berisi koleksi shift yang akan dicetak
 
     function loadData() {
-        const outputArea = document.getElementById('output-area');
-        outputArea.innerHTML = `<p style="text-align: center; color: #718096;">Sedang menyinkronkan data dari tab <strong>"${currentSheetName}"</strong>...</p>`;
-
         if (currentSpreadsheetId === 'MASUKKAN_ID_SPREADSHEET_CADANGAN_DI_SINI' || !currentSpreadsheetId) {
-            outputArea.innerHTML = `
-                <div style="text-align: center; color: #4a5568; padding: 40px 0;">
-                    <h3>Sistem Siap!</h3>
-                    <p>Silakan masukkan <strong>Google Spreadsheet ID</strong> pada kolom di atas, lalu klik <strong>"Simpan & Muat Ulang"</strong>.</p>
-                </div>
-            `;
             return;
         }
 
@@ -377,21 +425,265 @@
             .then(res => res.text())
             .then(csvText => {
                 parseCSV(csvText);
-                initApp();
             })
             .catch(err => {
-                outputArea.innerHTML = `
-                    <div style="text-align: center; color: #e53e3e; padding: 30px;">
-                        <p style="font-weight: bold; margin-bottom: 5px;">Gagal memuat data dari tab "${currentSheetName}"!</p>
-                        <p style="font-size: 13px; color: #718096; margin: 0;">Solusi perbaikan:</p>
-                        <ul style="display: inline-block; text-align: left; font-size: 13px; color: #718096;">
-                            <li>Pastikan penulisan nama tab di Spreadsheet kamu sama persis (misal: <strong>"${currentSheetName}"</strong>).</li>
-                            <li>Pastikan akses umum telah diatur ke <strong>"Siapa saja yang memiliki link"</strong> sebagai <strong>"Pelihat (Viewer)"</strong>.</li>
-                        </ul>
+                alert(`Gagal sinkronisasi Spreadsheet: ${err.message}`);
+            });
+    }
+
+    function parseCSV(csvText) {
+        const rows = csvText.split('\n').map(row => {
+            return row.split(',').map(cell => cell.replace(/^"(.*)"$/, '$1').trim());
+        });
+
+        allParsedData = [];
+        let currentTrain = null;
+        let isCollecting = false;
+
+        rows.forEach((row, idx) => {
+            if (idx === 0) return; 
+
+            const tanggal = row[15]; 
+            const stn = row[16];     
+            const noKA = row[17];    
+
+            if (tanggal && noKA && tanggal !== "TANGGAL") {
+                if (currentTrain) {
+                    allParsedData.push(currentTrain);
+                }
+                currentTrain = {
+                    tanggal: tanggal,
+                    stn: stn,
+                    noKA: noKA.toUpperCase(),
+                    noLok: row[22] || '-',      
+                    saranaList: [],
+                    totalTonase: '-'
+                };
+                isCollecting = true; 
+            } else if (currentTrain && isCollecting && row[23]) { 
+                const noSarana = row[23];
+                const status = row[24];          
+                const berat = row[25];           
+                const catatan = row[26] || '';    
+
+                if (noSarana === 'TONASE') {
+                    currentTrain.totalTonase = berat;
+                    isCollecting = false; 
+                } else {
+                    currentTrain.saranaList.push({
+                        noSarana: noSarana,
+                        status: status,
+                        berat: berat,
+                        catatan: catatan
+                    });
+                }
+            }
+        });
+
+        if (currentTrain) {
+            allParsedData.push(currentTrain);
+        }
+        renderBasket();
+    }
+
+    // Mengubah format Date picker HTML (YYYY-MM-DD) ke Format Spreadsheet (D/M/YYYY)
+    function formatDateToSheetFormat(dateStr) {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        const y = parts[0];
+        const m = parseInt(parts[1], 10);
+        const d = parseInt(parts[2], 10);
+        return `${d}/${m}/${y}`;
+    }
+
+    // Mencari tanggal esok hari berdasarkan string tanggal acuan picker
+    function getEsokHariString(dateStr) {
+        const d = new Date(dateStr);
+        d.setDate(d.getDate() + 1);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function addCurrentShiftToBasket() {
+        const datePickerVal = document.getElementById('target-date').value;
+        const selectedShift = document.getElementById('shift-select').value;
+
+        if (!datePickerVal) {
+            alert('Silakan pilih tanggal acuan terlebih dahulu!');
+            return;
+        }
+
+        const dateHariIniStr = formatDateToSheetFormat(datePickerVal);
+        let shiftLabel = '';
+        let extractedTrains = [];
+
+        if (selectedShift === 'malam') {
+            shiftLabel = `Dinas Malam (${dateHariIniStr})`;
+            const dateEsokStr = formatDateToSheetFormat(getEsokHariString(datePickerVal));
+
+            // Ambil Kereta Hari Ini (279, 249, 293)
+            const trainsHariIni = allParsedData.filter(t => {
+                return normalizeDate(t.tanggal) === normalizeDate(dateHariIniStr) && 
+                       shiftKAPlans.malam.hari_ini.includes(t.noKA);
+            });
+
+            // Ambil Kereta Esok Hari (211F, 147, 159, 7045)
+            const trainsEsokHari = allParsedData.filter(t => {
+                return normalizeDate(t.tanggal) === normalizeDate(dateEsokStr) && 
+                       shiftKAPlans.malam.esok_hari.includes(t.noKA);
+            });
+
+            extractedTrains = [...trainsHariIni, ...trainsEsokHari];
+
+            // Urutkan Kereta sesuai Global KA Order agar logis
+            extractedTrains.sort((a, b) => {
+                return globalKAOrder.indexOf(a.noKA) - globalKAOrder.indexOf(b.noKA);
+            });
+
+        } else {
+            // Shift Pagi & Siang (Semua di tanggal yang sama)
+            const targetShiftName = selectedShift === 'pagi' ? 'Pagi' : 'Siang';
+            shiftLabel = `Dinas ${targetShiftName} (${dateHariIniStr})`;
+            
+            const allowedKAs = shiftKAPlans[selectedShift];
+            extractedTrains = allParsedData.filter(t => {
+                return normalizeDate(t.tanggal) === normalizeDate(dateHariIniStr) && 
+                       allowedKAs.includes(t.noKA);
+            });
+
+            extractedTrains.sort((a, b) => {
+                return globalKAOrder.indexOf(a.noKA) - globalKAOrder.indexOf(b.noKA);
+            });
+        }
+
+        if (extractedTrains.length === 0) {
+            alert(`Tidak ditemukan data KA untuk ${shiftLabel} di database Google Sheet kamu.`);
+            return;
+        }
+
+        // Masukkan paket shift ini ke antrean cetak
+        printBasket.push({
+            id: Date.now(), // Unique ID untuk hapus item
+            label: shiftLabel,
+            trains: extractedTrains
+        });
+
+        renderBasket();
+    }
+
+    function removeShiftFromBasket(id) {
+        printBasket = printBasket.filter(item => item.id !== id);
+        renderBasket();
+    }
+
+    function clearBasket() {
+        if(confirm("Apakah kamu yakin ingin mengosongkan seluruh lembar cetak?")) {
+            printBasket = [];
+            renderBasket();
+        }
+    }
+
+    function changeFontSize(className) {
+        const printArea = document.getElementById('print-area-a4');
+        printArea.className = `a4-page ${className}`;
+    }
+
+    function normalizeDate(dateStr) {
+        if (!dateStr) return '';
+        let clean = dateStr.replace(/-/g, '/').trim();
+        let parts = clean.split('/');
+        if (parts.length !== 3) return clean;
+        let day = parseInt(parts[0], 10);
+        let month = parseInt(parts[1], 10);
+        let year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+        return `${day}/${month}/${year}`;
+    }
+
+    function renderBasket() {
+        const emptyState = document.getElementById('basket-empty-state');
+        const basketContent = document.getElementById('basket-content');
+
+        if (printBasket.length === 0) {
+            emptyState.style.display = 'block';
+            basketContent.innerHTML = '';
+            return;
+        }
+
+        emptyState.style.display = 'none';
+        basketContent.innerHTML = '';
+
+        printBasket.forEach(shift => {
+            let shiftHTML = `
+                <div class="shift-container-block">
+                    <button class="remove-shift-btn" onclick="removeShiftFromBasket(${shift.id})">Hapus Shift Ini</button>
+                    <div class="shift-title-banner">${shift.label}</div>
+            `;
+
+            shift.trains.forEach(train => {
+                let saranaRows = '';
+                let urut = 1;
+
+                // 1. Masukkan lokomotif dinasan di baris utama
+                if (train.noLok && train.noLok !== '-') {
+                    saranaRows += `
+                        <tr>
+                            <td style="width: 10%;">${urut++}</td>
+                            <td style="width: 30%;"><strong>${train.noLok}</strong></td>
+                            <td style="width: 12%;">-</td>
+                            <td style="width: 15%;">-</td>
+                            <td style="text-align: left; font-style: italic; color:#718096;">Lokomotif Dinas</td>
+                        </tr>
+                    `;
+                }
+
+                // 2. Baris sarana kereta-kereta
+                train.saranaList.forEach(sarana => {
+                    const isStatusD = sarana.status === 'D' ? 'class="status-d"' : '';
+                    saranaRows += `
+                        <tr>
+                            <td>${urut++}</td>
+                            <td>${sarana.noSarana}</td>
+                            <td ${isStatusD}>${sarana.status}</td>
+                            <td>${sarana.berat}</td>
+                            <td style="text-align: left;">${sarana.catatan}</td>
+                        </tr>
+                    `;
+                });
+
+                shiftHTML += `
+                    <div class="train-block">
+                        <div class="train-header-simple">
+                            <h4>KA ${train.noKA} (${train.stn})</h4>
+                            <span class="train-date">${train.tanggal}</span>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>No Urut</th>
+                                    <th>Nomor Sarana</th>
+                                    <th>TM</th>
+                                    <th>Ton</th>
+                                    <th>Keterangan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${saranaRows}
+                                <tr class="tonase-row">
+                                    <td colspan="3" style="text-align: right; font-weight: bold; border-top: 1px solid #cbd5e0;">TOTAL TONASE</td>
+                                    <td class="text-red" style="font-weight: bold; border-top: 1px solid #cbd5e0;">${train.totalTonase}</td>
+                                    <td style="border-top: 1px solid #cbd5e0;"></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 `;
-                console.error(err);
             });
+
+            shiftHTML += `</div>`;
+            basketContent.innerHTML += shiftHTML;
+        });
     }
 
     function handleMonthChange() {
@@ -416,214 +708,11 @@
         currentSpreadsheetId = newId;
         currentSheetName = selectedMonth;
 
-        alert('Pengaturan disimpan! Memuat data baru...');
+        alert('Pengaturan sukses disimpan! Mengambil data baru...');
         loadData();
     }
 
-    function parseCSV(csvText) {
-        const rows = csvText.split('\n').map(row => {
-            return row.split(',').map(cell => cell.replace(/^"(.*)"$/, '$1').trim());
-        });
-
-        allParsedData = [];
-        let currentTrain = null;
-        let isCollecting = false; // Flag untuk mengontrol pembatasan pembacaan kereta
-
-        rows.forEach((row, idx) => {
-            if (idx === 0) return; 
-
-            const tanggal = row[15]; // Kolom P
-            const stn = row[16];     // Kolom Q
-            const noKA = row[17];    // Kolom R
-
-            // JIKA MENEMUKAN BARIS AWAL KA BARU
-            if (tanggal && noKA && tanggal !== "TANGGAL") {
-                if (currentTrain) {
-                    allParsedData.push(currentTrain);
-                }
-                currentTrain = {
-                    tanggal: tanggal,
-                    stn: stn,
-                    noKA: noKA,
-                    noLok: row[22] || '-',      // Kolom W (Lokomotif utama)
-                    saranaList: [],
-                    totalTonase: '-'
-                };
-                isCollecting = true; // Mulai mengumpulkan sarana untuk KA ini
-            } 
-            // MEMBACA BARIS SARANA DI BAWAHNYA (HANYA JIKA SEDANG DALAM PENGUMPULAN)
-            else if (currentTrain && isCollecting && row[23]) { 
-                const noSarana = row[23];        // Kolom X
-                const status = row[24];          // Kolom Y (TM)
-                const berat = row[25];           // Kolom Z (Ton)
-                const catatan = row[26] || '';    // Kolom AA (Keterangan)
-
-                // LOGIKA EMAS: JIKA MENEMUKAN KATA 'TONASE', KUNCI DATA DAN STOP BACA UNTUK KA INI!
-                if (noSarana === 'TONASE') {
-                    currentTrain.totalTonase = berat;
-                    isCollecting = false; // Set flag ke false agar baris-baris kosong/kereta lain di bawahnya tidak terbawa!
-                } else {
-                    currentTrain.saranaList.push({
-                        noSarana: noSarana,
-                        status: status,
-                        berat: berat,
-                        catatan: catatan
-                    });
-                }
-            }
-        });
-
-        // Push sisa data terakhir jika ada
-        if (currentTrain) {
-            allParsedData.push(currentTrain);
-        }
-    }
-
-    function initApp() {
-        updateKABadges();
-        applyFilters();
-    }
-
-    function handleShiftChange() {
-        const selectedShift = document.getElementById('shift-select').value;
-        currentFilteredKA = [...defaultShifts[selectedShift]];
-        updateKABadges();
-        applyFilters();
-    }
-
-    function addManualKA() {
-        const inputEl = document.getElementById('manual-ka-input');
-        const value = inputEl.value.trim().toUpperCase();
-        if (value && !currentFilteredKA.includes(value)) {
-            currentFilteredKA.push(value);
-            inputEl.value = '';
-            updateKABadges();
-            applyFilters();
-        }
-    }
-
-    function removeKA(kaNumber) {
-        currentFilteredKA = currentFilteredKA.filter(ka => ka !== kaNumber);
-        updateKABadges();
-        applyFilters();
-    }
-
-    function updateKABadges() {
-        const container = document.getElementById('active-ka-list');
-        const selectedShift = document.getElementById('shift-select').value;
-
-        if (selectedShift === 'semua') {
-            container.innerHTML = '<span style="color:#718096; font-size:12px; font-style:italic;">Menampilkan semua nomor KA tanpa batasan.</span>';
-            return;
-        }
-
-        container.innerHTML = '';
-        currentFilteredKA.forEach(ka => {
-            container.innerHTML += `
-                <div class="ka-badge">
-                    KA ${ka}
-                    <span class="remove-btn" onclick="removeKA('${ka}')">&times;</span>
-                </div>
-            `;
-        });
-    }
-
-    function applyFilters() {
-        const dateFilterMode = document.getElementById('date-filter-select').value;
-        const selectedShift = document.getElementById('shift-select').value;
-        const outputArea = document.getElementById('output-area');
-        outputArea.innerHTML = '';
-
-        let targetNormalizedDate = '';
-        if (dateFilterMode === 'today') {
-            targetNormalizedDate = normalizeDate(getTodayString());
-        } else if (dateFilterMode === 'yesterday') {
-            targetNormalizedDate = normalizeDate(getYesterdayString());
-        }
-
-        const filteredData = allParsedData.filter(train => {
-            let matchDate = true;
-            if (dateFilterMode !== 'all') {
-                const trainNormDate = normalizeDate(train.tanggal);
-                matchDate = (trainNormDate === targetNormalizedDate);
-            }
-
-            const matchKA = selectedShift === 'semua' ? true : currentFilteredKA.includes(train.noKA.toUpperCase());
-
-            return matchDate && matchKA;
-        });
-
-        if (filteredData.length === 0) {
-            outputArea.innerHTML = `
-                <div style="text-align: center; color: #a0aec0; margin-top: 40px; padding: 20px;">
-                    <p style="font-style: italic; margin: 0;">Tidak ada data KA yang cocok dengan kriteria filter saat ini.</p>
-                </div>
-            `;
-            return;
-        }
-
-        filteredData.forEach(train => {
-            let saranaRows = '';
-            let urut = 1;
-
-            // 1. Lokomotif diletakkan di urutan pertama
-            if (train.noLok && train.noLok !== '-') {
-                saranaRows += `
-                    <tr>
-                        <td>${urut++}</td>
-                        <td><strong>${train.noLok}</strong></td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td style="text-align: left; font-style: italic; color:#718096;">Lokomotif Dinas</td>
-                    </tr>
-                `;
-            }
-
-            // 2. Baris-baris Kereta di bawahnya
-            train.saranaList.forEach(sarana => {
-                const isStatusD = sarana.status === 'D' ? 'class="status-d"' : '';
-                saranaRows += `
-                    <tr>
-                        <td>${urut++}</td>
-                        <td>${sarana.noSarana}</td>
-                        <td ${isStatusD}>${sarana.status}</td>
-                        <td>${sarana.berat}</td>
-                        <td style="text-align: left;">${sarana.catatan}</td>
-                    </tr>
-                `;
-            });
-
-            const blockHTML = `
-                <div class="train-block">
-                    <div class="train-header-simple">
-                        <h4>KA ${train.noKA} (${train.stn})</h4>
-                        <span class="train-date">${train.tanggal}</span>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 10%;">No Urut</th>
-                                <th style="width: 30%;">Nomor Sarana</th>
-                                <th style="width: 12%;">TM</th>
-                                <th style="width: 15%;">Ton</th>
-                                <th>Keterangan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${saranaRows}
-                            <tr class="tonase-row">
-                                <td colspan="3" style="text-align: right; font-weight: bold; border-top: 2px solid #cbd5e0;">TOTAL TONASE</td>
-                                <td class="text-red" style="font-weight: bold; border-top: 2px solid #cbd5e0;">${train.totalTonase}</td>
-                                <td style="border-top: 2px solid #cbd5e0;"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            outputArea.innerHTML += blockHTML;
-        });
-    }
-
+    // Jalankan sinkronisasi data sheet pertama kali
     loadData();
 </script>
 
