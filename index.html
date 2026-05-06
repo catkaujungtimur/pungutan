@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Cetak Ringkas Sarana - Print Basket</title>
+    <title>Sistem Cetak Ringkas Sarana - Polished Version</title>
     <style>
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
@@ -17,7 +17,7 @@
             margin: 0 auto;
         }
         
-        /* PANEL KONTROL (Sembunyi saat diprint) */
+        /* PANEL KONTROL UTAMA (Sembunyi saat diprint) */
         .control-panel {
             background-color: #fff;
             padding: 20px;
@@ -122,7 +122,7 @@
         .a4-page {
             background: white;
             width: 100%;
-            min-height: 297mm; /* Sesuai rasio A4 */
+            min-height: 297mm;
             box-sizing: border-box;
             padding: 20mm 15mm;
             margin: 0 auto 30px auto;
@@ -132,7 +132,7 @@
             position: relative;
         }
 
-        /* Ukuran Font Dinamis (Diatur lewat JS) */
+        /* Ukuran Font Dinamis */
         .font-xs { font-size: 11px !important; }
         .font-xs table { font-size: 10px !important; }
         .font-xs td, .font-xs th { padding: 4px 6px !important; }
@@ -145,7 +145,7 @@
         .font-md table { font-size: 14px !important; }
         .font-md td, .font-md th { padding: 8px 10px !important; }
 
-        /* BLOK KERETA & STRUKTUR TABEL */
+        /* WADAH TIAP SHIFT */
         .shift-container-block {
             margin-bottom: 25px;
             border: 1px dashed #cbd5e0;
@@ -182,6 +182,7 @@
             letter-spacing: 0.5px;
         }
 
+        /* BLOK KERETA INDIVIDUAL */
         .train-block {
             background: #fff;
             border: 1px solid #cbd5e0;
@@ -189,6 +190,7 @@
             margin-bottom: 30px; 
             overflow: hidden;
             page-break-inside: avoid;
+            position: relative;
         }
         .train-header-simple {
             background-color: #f7fafc;
@@ -197,6 +199,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding-right: 100px; /* Ruang aman agar teks tidak tertimpa tombol Hapus KA */
         }
         .train-header-simple h4 {
             margin: 0;
@@ -207,6 +210,24 @@
             font-weight: bold;
             color: #4a5568;
             font-size: 12px;
+        }
+
+        /* Tombol Hapus KA Individual */
+        .remove-train-btn {
+            position: absolute;
+            top: 6px;
+            right: 10px;
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .remove-train-btn:hover {
+            background: #c53030;
         }
 
         table {
@@ -241,14 +262,14 @@
             font-weight: bold;
         }
 
-        /* CSS CETAK PRINT */
+        /* CSS KHUSUS CETAK PRINT */
         @media print {
             body {
                 background-color: #fff;
                 padding: 0;
                 margin: 0;
             }
-            .control-panel, .preview-header-bar, .remove-shift-btn {
+            .control-panel, .preview-header-bar, .remove-shift-btn, .remove-train-btn {
                 display: none !important;
             }
             .a4-page {
@@ -333,8 +354,8 @@
                 <label for="shift-select">Pilih Shift Dinasan</label>
                 <select id="shift-select">
                     <option value="malam">Dinas Malam (Malam ini s.d Dini hari esok)</option>
-                    <option value="pagi">Dinas Pagi</option>
                     <option value="siang">Dinas Siang</option>
+                    <option value="pagi">Dinas Pagi</option>
                 </select>
             </div>
 
@@ -391,17 +412,21 @@
     document.getElementById('spreadsheet-id-input').value = currentSpreadsheetId;
     document.getElementById('month-select').value = currentSheetName;
 
-    // Set tanggal input default ke HARI INI
+    // Set tanggal default ke hari ini
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
     document.getElementById('target-date').value = `${yyyy}-${mm}-${dd}`;
 
-    // Urutan Kereta Global 24 jam
-    const globalKAOrder = ['211F', '147', '159', '7045A', '7045', '491', '297', '239F', '209', '493', '279', '249', '293'];
+    // URUTAN HISTORIS/JAM KA GLOBAL YANG DIPERBAIKI SANGAT SPESIFIK
+    const globalKAOrder = {
+        malam: ['279', '249', '293', '211F', '147', '159', '7045A', '7045'],
+        siang: ['239F', '209', '493', '279', '249'],
+        pagi: ['147', '159', '7045A', '7045', '491', '297', '239F']
+    };
 
-    // Pembagian shift dangan
+    // Struktur Rangkaian KA per Shift
     const shiftKAPlans = {
         pagi: ['147', '159', '7045A', '7045', '491', '297', '239F'],
         siang: ['239F', '209', '493', '279', '249'],
@@ -412,7 +437,7 @@
     };
 
     let allParsedData = [];
-    let printBasket = []; // Berisi koleksi shift yang akan dicetak
+    let printBasket = []; // Berisi koleksi objek shift
 
     function loadData() {
         if (currentSpreadsheetId === 'MASUKKAN_ID_SPREADSHEET_CADANGAN_DI_SINI' || !currentSpreadsheetId) {
@@ -486,7 +511,6 @@
         renderBasket();
     }
 
-    // Mengubah format Date picker HTML (YYYY-MM-DD) ke Format Spreadsheet (D/M/YYYY)
     function formatDateToSheetFormat(dateStr) {
         if (!dateStr) return '';
         const parts = dateStr.split('-');
@@ -496,7 +520,6 @@
         return `${d}/${m}/${y}`;
     }
 
-    // Mencari tanggal esok hari berdasarkan string tanggal acuan picker
     function getEsokHariString(dateStr) {
         const d = new Date(dateStr);
         d.setDate(d.getDate() + 1);
@@ -507,43 +530,50 @@
     }
 
     function addCurrentShiftToBasket() {
-        const datePickerVal = document.getElementById('target-date').value;
+        const dateDatePickerVal = document.getElementById('target-date').value;
         const selectedShift = document.getElementById('shift-select').value;
 
-        if (!datePickerVal) {
-            alert('Silakan pilih tanggal acuan terlebih dahulu!');
+        if (!dateDatePickerVal) {
+            alert('Silakan pilih tanggal dinasan terlebih dahulu!');
             return;
         }
 
-        const dateHariIniStr = formatDateToSheetFormat(datePickerVal);
+        const dateHariIniStr = formatDateToSheetFormat(dateDatePickerVal);
         let shiftLabel = '';
         let extractedTrains = [];
 
         if (selectedShift === 'malam') {
             shiftLabel = `Dinas Malam (${dateHariIniStr})`;
-            const dateEsokStr = formatDateToSheetFormat(getEsokHariString(datePickerVal));
+            const dateEsokStr = formatDateToSheetFormat(getEsokHariString(dateDatePickerVal));
 
-            // Ambil Kereta Hari Ini (279, 249, 293)
+            // Ambil KA Hari Ini (Malam Awal)
             const trainsHariIni = allParsedData.filter(t => {
                 return normalizeDate(t.tanggal) === normalizeDate(dateHariIniStr) && 
                        shiftKAPlans.malam.hari_ini.includes(t.noKA);
             });
 
-            // Ambil Kereta Esok Hari (211F, 147, 159, 7045)
+            // Ambil KA Esok Hari (Dini Hari)
             const trainsEsokHari = allParsedData.filter(t => {
                 return normalizeDate(t.tanggal) === normalizeDate(dateEsokStr) && 
                        shiftKAPlans.malam.esok_hari.includes(t.noKA);
             });
 
-            extractedTrains = [...trainsHariIni, ...trainsEsokHari];
-
-            // Urutkan Kereta sesuai Global KA Order agar logis
-            extractedTrains.sort((a, b) => {
-                return globalKAOrder.indexOf(a.noKA) - globalKAOrder.indexOf(b.noKA);
+            // GABUNGKAN SESUAI LOGIKA TERBARU: Hari ini dulu, baru esok harinya
+            // Urutkan KA hari ini berdasarkan daftar spesifik globalKAOrder.malam
+            trainsHariIni.sort((a, b) => {
+                return globalKAOrder.malam.indexOf(a.noKA) - globalKAOrder.malam.indexOf(b.noKA);
             });
 
+            // Urutkan KA esok hari berdasarkan daftar spesifik globalKAOrder.malam
+            trainsEsokHari.sort((a, b) => {
+                return globalKAOrder.malam.indexOf(a.noKA) - globalKAOrder.malam.indexOf(b.noKA);
+            });
+
+            // Gabungkan runtut ke bawah (Tanggal awal di atas, Tanggal besok di bawah)
+            extractedTrains = [...trainsHariIni, ...trainsEsokHari];
+
         } else {
-            // Shift Pagi & Siang (Semua di tanggal yang sama)
+            // Shift Pagi & Siang (Diurutkan sesuai urutan spesifik shift masing-masing)
             const targetShiftName = selectedShift === 'pagi' ? 'Pagi' : 'Siang';
             shiftLabel = `Dinas ${targetShiftName} (${dateHariIniStr})`;
             
@@ -553,8 +583,9 @@
                        allowedKAs.includes(t.noKA);
             });
 
+            // Urutkan sesuai urutan KA khusus shift tersebut
             extractedTrains.sort((a, b) => {
-                return globalKAOrder.indexOf(a.noKA) - globalKAOrder.indexOf(b.noKA);
+                return globalKAOrder[selectedShift].indexOf(a.noKA) - globalKAOrder[selectedShift].indexOf(b.noKA);
             });
         }
 
@@ -563,11 +594,19 @@
             return;
         }
 
-        // Masukkan paket shift ini ke antrean cetak
+        // Generate unik ID untuk membedakan tiap KA agar bisa dihapus satu per satu
+        const shiftId = Date.now();
+        const trainsWithId = extractedTrains.map((t, index) => {
+            return {
+                ...t,
+                uniqueTrainId: `${shiftId}_${index}` // ID Unik untuk hapus KA
+            };
+        });
+
         printBasket.push({
-            id: Date.now(), // Unique ID untuk hapus item
+            id: shiftId,
             label: shiftLabel,
-            trains: extractedTrains
+            trains: trainsWithId
         });
 
         renderBasket();
@@ -575,6 +614,18 @@
 
     function removeShiftFromBasket(id) {
         printBasket = printBasket.filter(item => item.id !== id);
+        renderBasket();
+    }
+
+    // FITUR BARU: Hapus KA Tertentu saja dari dalam lembar cetak
+    function removeSingleTrainFromBasket(uniqueTrainId) {
+        printBasket.forEach(shift => {
+            shift.trains = shift.trains.filter(t => t.uniqueTrainId !== uniqueTrainId);
+        });
+
+        // Hapus shift jika sudah tidak memiliki KA sama sekali di dalamnya
+        printBasket = printBasket.filter(shift => shift.trains.length > 0);
+        
         renderBasket();
     }
 
@@ -625,7 +676,6 @@
                 let saranaRows = '';
                 let urut = 1;
 
-                // 1. Masukkan lokomotif dinasan di baris utama
                 if (train.noLok && train.noLok !== '-') {
                     saranaRows += `
                         <tr>
@@ -638,7 +688,6 @@
                     `;
                 }
 
-                // 2. Baris sarana kereta-kereta
                 train.saranaList.forEach(sarana => {
                     const isStatusD = sarana.status === 'D' ? 'class="status-d"' : '';
                     saranaRows += `
@@ -652,8 +701,10 @@
                     `;
                 });
 
+                // TOMBOL BARU: "Hapus KA" diletakkan di header tiap blok KA
                 shiftHTML += `
                     <div class="train-block">
+                        <button class="remove-train-btn" onclick="removeSingleTrainFromBasket('${train.uniqueTrainId}')">✕ Hapus KA</button>
                         <div class="train-header-simple">
                             <h4>KA ${train.noKA} (${train.stn})</h4>
                             <span class="train-date">${train.tanggal}</span>
@@ -712,7 +763,6 @@
         loadData();
     }
 
-    // Jalankan sinkronisasi data sheet pertama kali
     loadData();
 </script>
 
