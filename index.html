@@ -505,29 +505,30 @@
         return kaAngka(a) === kaAngka(b);
     }
 
-    // Urutan KA per shift — gunakan angka saja sebagai patokan urutan
+    // Urutan KA per shift — tetap pakai nama lengkap dengan huruf
+    // Pencocokan pakai isSameKA() sehingga 7045/7045A/7045B semua cocok
     const globalKAOrder = {
-        malam: ['279', '249', '293', '211', '147', '159', '7045'],
-        siang: ['239', '209', '493', '279', '249'],
-        pagi:  ['147', '159', '7045', '491', '297', '239']
+        malam: ['279', '249', '293', '211F', '147', '159', '7045'],
+        siang: ['239F', '209', '493', '279', '249'],
+        pagi:  ['147', '159', '7045', '491', '297', '239F']
     };
 
-    // Daftar KA yang boleh masuk tiap shift (juga pakai angka)
+    // Daftar KA yang boleh masuk tiap shift
     const shiftKAPlans = {
-        pagi:  ['147', '159', '7045', '491', '297', '239'],
-        siang: ['239', '209', '493', '279', '249'],
+        pagi:  ['147', '159', '7045', '491', '297', '239F'],
+        siang: ['239F', '209', '493', '279', '249'],
         malam: {
             hari_ini:  ['279', '249', '293'],
-            esok_hari: ['211', '147', '159', '7045']
+            esok_hari: ['211F', '147', '159', '7045']
         }
     };
 
-    // Cek apakah noKA masuk dalam daftar (pakai perbandingan angka)
+    // Cek apakah noKA masuk dalam daftar (pakai perbandingan angka agar fleksibel)
     function kaInList(noKA, list) {
         return list.some(item => isSameKA(noKA, item));
     }
 
-    // Cari indeks urutan KA dalam globalKAOrder (pakai angka)
+    // Cari indeks urutan KA dalam globalKAOrder (pakai angka agar fleksibel)
     function kaOrderIndex(noKA, orderList) {
         const idx = orderList.findIndex(item => isSameKA(noKA, item));
         return idx === -1 ? 999 : idx;
