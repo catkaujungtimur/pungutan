@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Cetak 3 Kolom Sarana - A4 Landscape</title>
+    <title>Sistem Cetak Sarana - Multi-Column & Multi-Page</title>
     <style>
+        :root {
+            --paper-width: 297mm;
+            --paper-height: 210mm;
+        }
         body {
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
             background-color: #f0f4f8;
             margin: 0;
             padding: 10px;
@@ -31,60 +35,64 @@
         .btn-success { background: #48bb78; color: white; }
         .btn-danger { background: #e53e3e; color: white; }
 
-        /* PREVIEW HEADER */
-        .preview-header {
-            display: flex;
-            justify-content: space-between;
-            background: #fff;
-            padding: 8px 15px;
-            border: 1px solid #cbd5e0;
-            border-bottom: none;
-            border-radius: 6px 6px 0 0;
-            margin: 0 auto;
-            width: 297mm;
-            box-sizing: border-box;
-        }
+        /* ORIENTASI KERTAS */
+        .mode-landscape { --paper-width: 297mm; --paper-height: 210mm; }
+        .mode-portrait { --paper-width: 210mm; --paper-height: 297mm; }
 
-        /* SIMULASI A4 LANDSCAPE */
-        .a4-landscape {
-            background: white;
-            width: 297mm;
-            min-height: 210mm;
+        /* SIMULASI KERTAS A4 */
+        .paper-container {
             margin: 0 auto;
+            width: var(--paper-width);
+            background: #fff;
+            min-height: var(--paper-height);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
             padding: 10mm;
             box-sizing: border-box;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr; /* 3 KOLOM TETAP */
-            gap: 8mm;
-            border: 1px solid #cbd5e0;
+            position: relative;
+            /* Garis bantu visual untuk halaman 1 */
+            border-bottom: 2px dashed #ff0000; 
+        }
+        .paper-container::after {
+            content: "BATAS HALAMAN 1";
+            position: absolute;
+            top: var(--paper-height);
+            right: 10px;
+            color: red;
+            font-size: 10px;
+            font-weight: bold;
         }
 
-        /* KOLOM SETTINGS */
-        .column-container {
+        /* GRID 3 KOLOM */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5mm;
+            align-items: start;
+        }
+
+        .column {
             display: flex;
             flex-direction: column;
             gap: 10px;
-            min-height: 100%;
+            min-height: 100px;
         }
-        .column-title {
+        .col-header {
             text-align: center;
             background: #2d3748;
             color: white;
-            padding: 4px;
-            font-size: 12px;
+            padding: 5px;
+            font-size: 11px;
             font-weight: bold;
             text-transform: uppercase;
             border-radius: 3px;
         }
 
-        /* TRAIN CARD STYLE (LEBIH RAPAT) */
+        /* TRAIN CARD */
         .train-block {
             border: 1px solid #000;
             font-size: 10px;
             page-break-inside: avoid;
-            position: relative;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         .train-header {
             background: #f0f0f0;
@@ -93,61 +101,47 @@
             border-bottom: 1px solid #000;
             display: flex;
             justify-content: space-between;
-            align-items: center;
         }
-        .remove-ka-btn {
-            background: #e53e3e;
-            color: white;
-            border: none;
-            font-size: 9px;
-            padding: 1px 4px;
-            cursor: pointer;
-            border-radius: 2px;
+        .remove-btn {
+            background: #e53e3e; color: white; border: none; font-size: 9px; cursor: pointer; padding: 0 4px;
         }
 
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #000; padding: 2px; text-align: center; }
-        th { background: #f7fafc; font-size: 9px; }
         .status-d { background: #fed7d7 !important; }
-        .tonase-row { font-weight: bold; background: #f0f0f0; }
+        .tonase-row { font-weight: bold; background: #eee; }
 
         /* PRINT SETTINGS */
         @media print {
-            @page { size: landscape; margin: 5mm; }
             body { background: white; padding: 0; }
-            .control-panel, .preview-header, .remove-ka-btn { display: none !important; }
-            .a4-landscape {
-                box-shadow: none;
-                border: none;
-                margin: 0;
-                width: 100%;
-                padding: 0;
+            .control-panel, .remove-btn, .paper-container::after { display: none !important; }
+            .paper-container { 
+                box-shadow: none; border: none; width: 100%; padding: 0; margin: 0;
             }
-            .column-container { gap: 5px; }
+            .mode-landscape { @page { size: landscape; } }
+            .mode-portrait { @page { size: portrait; } }
         }
     </style>
 </head>
-<body>
+<body class="mode-landscape" id="body-main">
 
 <div class="control-panel">
     <div class="panel-row">
         <div class="form-group">
             <label>ID Spreadsheet:</label>
-            <input type="text" id="ss-id" style="width: 200px;">
+            <input type="text" id="ss-id">
         </div>
         <div class="form-group">
             <label>Bulan:</label>
             <select id="ss-month">
-                <option value="JAN 2026">Januari</option>
-                <option value="FEB 2026">Februari</option>
-                <option value="MAR 2026">Maret</option>
-                <option value="APR 2026">April</option>
-                <option value="MEI 2026">Mei</option>
-                <option value="JUNI 2026">Juni</option>
+                <option value="MEI 2026">Mei 2026</option>
+                <option value="JUNI 2026">Juni 2026</option>
             </select>
         </div>
-        <button class="btn btn-success" onclick="saveAndLoad()">Simpan ID</button>
+        <button class="btn btn-success" onclick="saveAndFetch()">Sync Data</button>
+        
         <div style="border-left: 1px solid #ccc; height: 30px; margin: 0 10px;"></div>
+
         <div class="form-group">
             <label>Tanggal:</label>
             <input type="date" id="target-date">
@@ -160,134 +154,128 @@
                 <option value="pagi">PAGI (Kanan)</option>
             </select>
         </div>
-        <button class="btn btn-primary" onclick="addShiftToColumn()">+ Masukkan ke Lembar</button>
-        <button class="btn btn-danger" onclick="clearBasket()">🧹 Kosongkan</button>
+        <button class="btn btn-primary" onclick="processSelection()">+ Tambah</button>
+        
+        <div class="form-group">
+            <label>Orientasi:</label>
+            <select onchange="changeOrient(this.value)">
+                <option value="mode-landscape">Landscape</option>
+                <option value="mode-portrait">Portrait</option>
+            </select>
+        </div>
+        <button class="btn btn-danger" onclick="location.reload()">🧹 Reset</button>
     </div>
 </div>
 
-<div class="preview-header">
-    <span style="font-weight:bold; font-size:12px;">PREVIEW A4 LANDSCAPE (3 KOLOM)</span>
-    <button class="btn btn-primary" onclick="window.print()" style="padding: 3px 10px;">🖨️ CETAK SEKARANG</button>
-</div>
-
-<div class="a4-landscape" id="print-area">
-    <div class="column-container" id="col-malam">
-        <div class="column-title">DINAS MALAM</div>
-        <div class="content"></div>
-    </div>
-    <div class="column-container" id="col-siang">
-        <div class="column-title">DINAS SIANG</div>
-        <div class="content"></div>
-    </div>
-    <div class="column-container" id="col-pagi">
-        <div class="column-title">DINAS PAGI</div>
-        <div class="content"></div>
+<div class="paper-container">
+    <div class="grid-layout">
+        <div class="column" id="col-malam">
+            <div class="col-header">DINAS MALAM</div>
+            <div class="content"></div>
+        </div>
+        <div class="column" id="col-siang">
+            <div class="col-header">DINAS SIANG</div>
+            <div class="content"></div>
+        </div>
+        <div class="column" id="col-pagi">
+            <div class="col-header">DINAS PAGI</div>
+            <div class="content"></div>
+        </div>
     </div>
 </div>
 
 <script>
-    // --- LOGIKA DATABASE & FETCH (The "Brain") ---
-    let allParsedData = [];
-    const shiftPlans = {
+    let db = [];
+    const config = {
         malam: { h0: ['279', '249', '293'], h1: ['211F', '147', '159', '7045'] },
         siang: ['239F', '209', '493', '279', '249'],
         pagi: ['147', '159', '7045', '491', '297', '239F']
     };
 
-    // Inisialisasi ID dan Tanggal
-    document.getElementById('ss-id').value = localStorage.getItem('user_ss_id') || '';
+    // Load LocalStorage
+    document.getElementById('ss-id').value = localStorage.getItem('my_ss_id') || '';
     document.getElementById('target-date').valueAsDate = new Date();
 
-    function saveAndLoad() {
+    function changeOrient(val) {
+        document.getElementById('body-main').className = val;
+    }
+
+    function saveAndFetch() {
         const id = document.getElementById('ss-id').value;
         const month = document.getElementById('ss-month').value;
-        localStorage.setItem('user_ss_id', id);
-        fetchData(id, month);
-    }
-
-    function fetchData(id, month) {
-        if(!id) return alert("Masukkan ID Spreadsheet!");
+        if(!id) return alert("Masukkan ID!");
+        localStorage.setItem('my_ss_id', id);
+        
         const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(month)}`;
         fetch(url).then(r => r.text()).then(csv => {
-            parseCSV(csv);
-            alert("Data Berhasil Disinkronkan!");
+            db = parse(csv);
+            alert("Data tersinkron! Total: " + db.length + " KA.");
         });
     }
 
-    function parseCSV(csv) {
-        const rows = csv.split('\n').map(r => r.split(',').map(c => c.replace(/^"(.*)"$/, '$1').trim()));
-        allParsedData = [];
-        let current = null;
-        rows.forEach((row, i) => {
+    function parse(csv) {
+        const lines = csv.split('\n').map(l => l.split(',').map(c => c.replace(/^"(.*)"$/, '$1').trim()));
+        let results = [];
+        let cur = null;
+        lines.forEach((row, i) => {
             if(i === 0) return;
             if(row[15] && row[17] && row[15] !== "TANGGAL") {
-                if(current) allParsedData.push(current);
-                current = { tanggal: row[15], noKA: row[17].toUpperCase(), noLok: row[22], sarana: [], tonase: '-' };
-            } else if(current && row[23]) {
-                if(row[23] === 'TONASE') { current.tonase = row[25]; }
-                else { current.sarana.push({ no: row[23], tm: row[24], ton: row[25], ket: row[26]||'' }); }
+                if(cur) results.push(cur);
+                cur = { tgl: row[15], ka: row[17].toUpperCase(), lok: row[22], items: [], ton: '-' };
+            } else if(cur && row[23]) {
+                if(row[23] === 'TONASE') cur.ton = row[25];
+                else cur.items.push({ no: row[23], tm: row[24], ton: row[25], ket: row[26]||'' });
             }
         });
-        if(current) allParsedData.push(current);
+        if(cur) results.push(cur);
+        return results;
     }
 
-    // --- LOGIKA KERANJANG CETAK ---
-    function addShiftToColumn() {
-        const dateInput = document.getElementById('target-date').value;
+    function processSelection() {
+        const dateVal = document.getElementById('target-date').value;
         const shift = document.getElementById('shift-select').value;
-        const colContent = document.querySelector(`#col-${shift} .content`);
+        if(!dateVal) return;
+
+        const d = dateVal.split('-');
+        const tglH0 = `${parseInt(d[2])}/${parseInt(d[1])}/${d[0]}`;
         
-        const dateParts = dateInput.split('-');
-        const dateH0 = `${parseInt(dateParts[2])}/${parseInt(dateParts[1])}/${dateParts[0]}`;
-        
-        let targetKAs = [];
+        let selected = [];
         if(shift === 'malam') {
-            const nextD = new Date(dateInput); nextD.setDate(nextD.getDate() + 1);
-            const dateH1 = `${nextD.getDate()}/${nextD.getMonth()+1}/${nextD.getFullYear()}`;
-            
-            const kaH0 = allParsedData.filter(t => t.tanggal === dateH0 && shiftPlans.malam.h0.includes(t.noKA));
-            const kaH1 = allParsedData.filter(t => t.tanggal === dateH1 && shiftPlans.malam.h1.includes(t.noKA));
-            targetKAs = [...kaH0, ...kaH1];
+            const next = new Date(dateVal); next.setDate(next.getDate()+1);
+            const tglH1 = `${next.getDate()}/${next.getMonth()+1}/${next.getFullYear()}`;
+            const h0 = db.filter(t => t.tgl === tglH0 && config.malam.h0.includes(t.ka));
+            const h1 = db.filter(t => t.tgl === tglH1 && config.malam.h1.includes(t.ka));
+            selected = [...h0, ...h1];
         } else {
-            targetKAs = allParsedData.filter(t => t.tanggal === dateH0 && shiftPlans[shift].includes(t.noKA));
+            selected = db.filter(t => t.tgl === tglH0 && config[shift].includes(t.ka));
         }
 
-        if(targetKAs.length === 0) return alert("Data tidak ditemukan untuk tanggal & shift ini.");
+        if(selected.length === 0) return alert("Data KA tidak ditemukan untuk filter ini.");
+        render(selected, shift);
+    }
 
-        // Buat Group Container untuk shift tersebut
-        const group = document.createElement('div');
-        group.innerHTML = `<div style="text-align:center; font-size:10px; border-bottom:1px solid #ccc; margin:5px 0;">DINAS ${dateH0}</div>`;
-        
-        targetKAs.forEach(ka => {
-            const card = document.createElement('div');
-            card.className = 'train-block';
-            let rows = `<tr><td>1</td><td><b>${ka.noLok}</b></td><td>-</td><td>-</td><td>LOK</td></tr>`;
-            ka.sarana.forEach((s, idx) => {
-                rows += `<tr><td>${idx+2}</td><td>${s.no}</td><td class="${s.tm==='D'?'status-d':''}">${s.tm}</td><td>${s.ton}</td><td>${s.ket}</td></tr>`;
+    function render(data, shift) {
+        const container = document.querySelector(`#col-${shift} .content`);
+        data.forEach(ka => {
+            const div = document.createElement('div');
+            div.className = 'train-block';
+            let rows = `<tr><td>1</td><td><b>${ka.lok}</b></td><td>-</td><td>-</td><td>LOK</td></tr>`;
+            ka.items.forEach((s, i) => {
+                rows += `<tr><td>${i+2}</td><td>${s.no}</td><td class="${s.tm==='D'?'status-d':''}">${s.tm}</td><td>${s.ton}</td><td>${s.ket}</td></tr>`;
             });
 
-            card.innerHTML = `
+            div.innerHTML = `
                 <div class="train-header">
-                    <span>KA ${ka.noKA} (${ka.tanggal})</span>
-                    <button class="remove-ka-btn" onclick="this.parentElement.parentElement.remove()">✕</button>
+                    <span>KA ${ka.ka} (${ka.tgl})</span>
+                    <button class="remove-btn" onclick="this.parentElement.parentElement.remove()">✕</button>
                 </div>
                 <table>
                     <thead><tr><th>No</th><th>Sarana</th><th>TM</th><th>Ton</th><th>Ket</th></tr></thead>
-                    <tbody>${rows}<tr class="tonase-row"><td colspan="3">TOTAL TONASE</td><td>${ka.tonase}</td><td></td></tr></tbody>
+                    <tbody>${rows}<tr class="tonase-row"><td colspan="3">TOTAL</td><td>${ka.ton}</td><td></td></tr></tbody>
                 </table>
             `;
-            group.appendChild(card);
+            container.appendChild(div);
         });
-        colContent.appendChild(group);
-    }
-
-    function clearBasket() { 
-        if(confirm("Kosongkan kertas?")) document.querySelectorAll('.content').forEach(c => c.innerHTML = ''); 
-    }
-
-    // Load data otomatis jika ID sudah ada
-    if(document.getElementById('ss-id').value) {
-        fetchData(document.getElementById('ss-id').value, document.getElementById('ss-month').value);
     }
 </script>
 </body>
