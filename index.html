@@ -118,13 +118,13 @@
             align-items: center;
         }
 
-        /* Wadah Kertas A4 */
+        /* Wadah Kertas A4 - 3 Kolom Layout */
         .a4-page {
             background: white;
-            width: 100%;
+            width: 210mm;
             min-height: 297mm;
             box-sizing: border-box;
-            padding: 20mm 15mm;
+            padding: 8mm 6mm;
             margin: 0 auto 30px auto;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             border: 1px solid #cbd5e0;
@@ -132,98 +132,140 @@
             position: relative;
         }
 
-        /* Ukuran Font Dinamis */
-        .font-xs { font-size: 11px !important; }
-        .font-xs table { font-size: 10px !important; }
-        .font-xs td, .font-xs th { padding: 4px 6px !important; }
+        /* Grid 3 kolom sesuai posisi shift */
+        .three-col-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 4mm;
+            width: 100%;
+            min-height: 277mm;
+            align-items: start;
+        }
 
-        .font-sm { font-size: 13px !important; }
-        .font-sm table { font-size: 12px !important; }
-        .font-sm td, .font-sm th { padding: 6px 8px !important; }
-
-        .font-md { font-size: 15px !important; }
-        .font-md table { font-size: 14px !important; }
-        .font-md td, .font-md th { padding: 8px 10px !important; }
-
-        /* WADAH TIAP SHIFT */
-        .shift-container-block {
-            margin-bottom: 25px;
-            border: 1px dashed #cbd5e0;
-            padding: 15px;
-            border-radius: 6px;
+        /* Slot kolom per shift */
+        .col-slot {
+            min-height: 50px;
             position: relative;
+        }
+        .col-slot.col-malam { grid-column: 1; }
+        .col-slot.col-siang { grid-column: 2; }
+        .col-slot.col-pagi  { grid-column: 3; }
+
+        /* Pemisah kolom visual */
+        .col-slot.col-siang {
+            border-left: 1px dashed #cbd5e0;
+            border-right: 1px dashed #cbd5e0;
+            padding: 0 3mm;
+        }
+        .col-slot.col-malam { padding-right: 1mm; }
+        .col-slot.col-pagi  { padding-left: 1mm; }
+
+        /* Label kosong jika slot tidak diisi */
+        .col-slot-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 200px;
+            color: #e2e8f0;
+            font-size: 10px;
+            text-align: center;
+        }
+
+        /* Ukuran Font Dinamis */
+        .font-xs { font-size: 9px !important; }
+        .font-xs table { font-size: 8px !important; }
+        .font-xs td, .font-xs th { padding: 2px 3px !important; }
+
+        .font-sm { font-size: 11px !important; }
+        .font-sm table { font-size: 10px !important; }
+        .font-sm td, .font-sm th { padding: 3px 4px !important; }
+
+        .font-md { font-size: 13px !important; }
+        .font-md table { font-size: 12px !important; }
+        .font-md td, .font-md th { padding: 5px 6px !important; }
+
+        /* WADAH TIAP SHIFT di dalam kolom */
+        .shift-container-block {
+            margin-bottom: 0;
+            border: none;
+            padding: 0;
+            border-radius: 0;
+            position: relative;
+            width: 100%;
         }
         .remove-shift-btn {
             position: absolute;
-            top: 5px;
-            right: 5px;
+            top: -2px;
+            right: -2px;
             background: #fed7d7;
             color: #c53030;
             border: none;
-            padding: 2px 8px;
-            border-radius: 4px;
+            padding: 1px 5px;
+            border-radius: 3px;
             cursor: pointer;
-            font-size: 11px;
+            font-size: 9px;
             font-weight: bold;
+            z-index: 10;
         }
         .remove-shift-btn:hover {
             background: #feb2b2;
         }
 
         .shift-title-banner {
-            font-size: 14px;
+            font-size: 10px;
             font-weight: bold;
             background-color: #2b6cb0;
             color: white;
-            padding: 6px 12px;
-            border-radius: 4px;
-            margin-bottom: 15px;
+            padding: 4px 8px;
+            border-radius: 3px;
+            margin-bottom: 6px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         /* BLOK KERETA INDIVIDUAL */
         .train-block {
             background: #fff;
             border: 1px solid #cbd5e0;
-            border-radius: 4px;
-            margin-bottom: 30px; 
+            border-radius: 3px;
+            margin-bottom: 5px; 
             overflow: hidden;
             page-break-inside: avoid;
             position: relative;
         }
         .train-header-simple {
             background-color: #f7fafc;
-            border-bottom: 2px solid #cbd5e0;
-            padding: 8px 12px;
+            border-bottom: 1px solid #cbd5e0;
+            padding: 4px 6px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-right: 100px; /* Ruang aman agar teks tidak tertimpa tombol Hapus KA */
+            padding-right: 55px;
         }
         .train-header-simple h4 {
             margin: 0;
-            font-size: 14px;
+            font-size: 10px;
             color: #2d3748;
         }
         .train-header-simple .train-date {
             font-weight: bold;
             color: #4a5568;
-            font-size: 12px;
+            font-size: 9px;
         }
 
         /* Tombol Hapus KA Individual */
         .remove-train-btn {
             position: absolute;
-            top: 6px;
-            right: 10px;
+            top: 3px;
+            right: 4px;
             background: #e53e3e;
             color: white;
             border: none;
-            padding: 3px 8px;
-            border-radius: 3px;
+            padding: 2px 5px;
+            border-radius: 2px;
             cursor: pointer;
-            font-size: 11px;
+            font-size: 9px;
             font-weight: bold;
         }
         .remove-train-btn:hover {
@@ -264,13 +306,22 @@
 
         /* CSS KHUSUS CETAK PRINT */
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 8mm 6mm;
+            }
             body {
                 background-color: #fff;
                 padding: 0;
                 margin: 0;
             }
-            .control-panel, .preview-header-bar, .remove-shift-btn, .remove-train-btn {
+            .control-panel, .preview-header-bar, .remove-shift-btn, .remove-train-btn, .col-slot-empty {
                 display: none !important;
+            }
+            .container {
+                max-width: 100%;
+                padding: 0;
+                margin: 0;
             }
             .a4-page {
                 box-shadow: none;
@@ -279,36 +330,47 @@
                 margin: 0;
                 width: 100%;
                 min-height: auto;
-                background: transparent;
+                background: white;
             }
-            .shift-container-block {
-                border: none;
-                padding: 0;
-                margin-bottom: 30px;
+            .three-col-grid {
+                min-height: auto;
+                gap: 3mm;
+            }
+            .col-slot.col-siang {
+                border-left: 0.5pt solid #aaa;
+                border-right: 0.5pt solid #aaa;
             }
             .shift-title-banner {
-                background-color: #000 !important;
+                background-color: #2b6cb0 !important;
                 color: #fff !important;
-                border: 1px solid #000;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
             .train-block {
-                border: 1px solid #000;
-                margin-bottom: 40px;
+                border: 0.5pt solid #999;
+                margin-bottom: 4px;
                 page-break-inside: avoid;
             }
-            th {
-                border-bottom: 2px solid #000;
+            .train-header-simple {
                 background-color: #f0f0f0 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
+            th {
+                background-color: #e8e8e8 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
             td {
-                border-bottom: 1px solid #ccc;
+                border-bottom: 0.3pt solid #ccc;
             }
             .tonase-row {
                 background-color: #f0f0f0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .status-d {
+                background-color: #fdd !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
@@ -391,7 +453,20 @@
             <p style="font-style: italic; margin: 0; font-size: 13px;">Belum ada shift yang dimasukkan ke lembar cetak.</p>
             <p style="font-size: 11px; color: #cbd5e0; margin-top: 5px;">Gunakan panel kontrol di atas untuk menyusun isi kertas cetak harianmu.</p>
         </div>
-        <div id="basket-content"></div>
+        <div class="three-col-grid" id="basket-content" style="display:none;">
+            <!-- Kolom Kiri: Dinas Malam -->
+            <div class="col-slot col-malam" id="col-malam">
+                <div class="col-slot-empty" id="empty-malam">— Malam —</div>
+            </div>
+            <!-- Kolom Tengah: Dinas Siang -->
+            <div class="col-slot col-siang" id="col-siang">
+                <div class="col-slot-empty" id="empty-siang">— Siang —</div>
+            </div>
+            <!-- Kolom Kanan: Dinas Pagi -->
+            <div class="col-slot col-pagi" id="col-pagi">
+                <div class="col-slot-empty" id="empty-pagi">— Pagi —</div>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -538,6 +613,16 @@
             return;
         }
 
+        // CEK DUPLIKAT: tiap shift hanya boleh ada 1x di kertas
+        const alreadyExists = printBasket.some(item => item.shiftType === selectedShift);
+        if (alreadyExists) {
+            const namaShift = selectedShift.charAt(0).toUpperCase() + selectedShift.slice(1);
+            if (!confirm(`Dinas ${namaShift} sudah ada di lembar cetak. Ganti dengan data baru?`)) {
+                return;
+            }
+            printBasket = printBasket.filter(item => item.shiftType !== selectedShift);
+        }
+
         const dateHariIniStr = formatDateToSheetFormat(dateDatePickerVal);
         let shiftLabel = '';
         let extractedTrains = [];
@@ -605,6 +690,7 @@
 
         printBasket.push({
             id: shiftId,
+            shiftType: selectedShift,  // 'malam' | 'siang' | 'pagi'
             label: shiftLabel,
             trains: trainsWithId
         });
@@ -638,7 +724,9 @@
 
     function changeFontSize(className) {
         const printArea = document.getElementById('print-area-a4');
-        printArea.className = `a4-page ${className}`;
+        // Hapus semua kelas font dulu
+        printArea.classList.remove('font-xs', 'font-sm', 'font-md');
+        printArea.classList.add(className);
     }
 
     function normalizeDate(dateStr) {
@@ -655,23 +743,49 @@
     function renderBasket() {
         const emptyState = document.getElementById('basket-empty-state');
         const basketContent = document.getElementById('basket-content');
+        const colMalam = document.getElementById('col-malam');
+        const colSiang = document.getElementById('col-siang');
+        const colPagi  = document.getElementById('col-pagi');
 
         if (printBasket.length === 0) {
             emptyState.style.display = 'block';
-            basketContent.innerHTML = '';
+            basketContent.style.display = 'none';
+            // Reset semua kolom
+            colMalam.innerHTML = '<div class="col-slot-empty" id="empty-malam">— Malam —</div>';
+            colSiang.innerHTML = '<div class="col-slot-empty" id="empty-siang">— Siang —</div>';
+            colPagi.innerHTML  = '<div class="col-slot-empty" id="empty-pagi">— Pagi —</div>';
             return;
         }
 
         emptyState.style.display = 'none';
-        basketContent.innerHTML = '';
+        basketContent.style.display = 'grid';
+
+        // Reset kolom ke placeholder kosong dulu
+        colMalam.innerHTML = '<div class="col-slot-empty" id="empty-malam">— Malam —</div>';
+        colSiang.innerHTML = '<div class="col-slot-empty" id="empty-siang">— Siang —</div>';
+        colPagi.innerHTML  = '<div class="col-slot-empty" id="empty-pagi">— Pagi —</div>';
+
+        // Map shift ke kolom DOM
+        const colMap = {
+            malam: colMalam,
+            siang: colSiang,
+            pagi:  colPagi
+        };
+        const emptyIdMap = {
+            malam: 'empty-malam',
+            siang: 'empty-siang',
+            pagi:  'empty-pagi'
+        };
 
         printBasket.forEach(shift => {
-            let shiftHTML = `
-                <div class="shift-container-block">
-                    <button class="remove-shift-btn" onclick="removeShiftFromBasket(${shift.id})">Hapus Shift Ini</button>
-                    <div class="shift-title-banner">${shift.label}</div>
-            `;
+            const targetCol = colMap[shift.shiftType];
+            if (!targetCol) return;
 
+            // Hapus placeholder kosong saat kolom mulai diisi
+            const emptyEl = document.getElementById(emptyIdMap[shift.shiftType]);
+            if (emptyEl) emptyEl.remove();
+
+            let trainsHTML = '';
             shift.trains.forEach(train => {
                 let saranaRows = '';
                 let urut = 1;
@@ -679,11 +793,11 @@
                 if (train.noLok && train.noLok !== '-') {
                     saranaRows += `
                         <tr>
-                            <td style="width: 10%;">${urut++}</td>
-                            <td style="width: 30%;"><strong>${train.noLok}</strong></td>
-                            <td style="width: 12%;">-</td>
-                            <td style="width: 15%;">-</td>
-                            <td style="text-align: left; font-style: italic; color:#718096;">Lokomotif Dinas</td>
+                            <td>${urut++}</td>
+                            <td><strong>${train.noLok}</strong></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td style="text-align: left; font-style: italic; color:#718096;">Lok</td>
                         </tr>
                     `;
                 }
@@ -701,10 +815,9 @@
                     `;
                 });
 
-                // TOMBOL BARU: "Hapus KA" diletakkan di header tiap blok KA
-                shiftHTML += `
+                trainsHTML += `
                     <div class="train-block">
-                        <button class="remove-train-btn" onclick="removeSingleTrainFromBasket('${train.uniqueTrainId}')">✕ Hapus KA</button>
+                        <button class="remove-train-btn" onclick="removeSingleTrainFromBasket('${train.uniqueTrainId}')">✕</button>
                         <div class="train-header-simple">
                             <h4>KA ${train.noKA} (${train.stn})</h4>
                             <span class="train-date">${train.tanggal}</span>
@@ -712,17 +825,17 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>No Urut</th>
-                                    <th>Nomor Sarana</th>
-                                    <th>TM</th>
-                                    <th>Ton</th>
-                                    <th>Keterangan</th>
+                                    <th style="width:8%">#</th>
+                                    <th style="width:28%">Sarana</th>
+                                    <th style="width:10%">TM</th>
+                                    <th style="width:13%">Ton</th>
+                                    <th>Ket.</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${saranaRows}
                                 <tr class="tonase-row">
-                                    <td colspan="3" style="text-align: right; font-weight: bold; border-top: 1px solid #cbd5e0;">TOTAL TONASE</td>
+                                    <td colspan="3" style="text-align: right; font-weight: bold; border-top: 1px solid #cbd5e0;">TOTAL</td>
                                     <td class="text-red" style="font-weight: bold; border-top: 1px solid #cbd5e0;">${train.totalTonase}</td>
                                     <td style="border-top: 1px solid #cbd5e0;"></td>
                                 </tr>
@@ -732,8 +845,14 @@
                 `;
             });
 
-            shiftHTML += `</div>`;
-            basketContent.innerHTML += shiftHTML;
+            const shiftHTML = `
+                <div class="shift-container-block" style="position:relative;">
+                    <button class="remove-shift-btn" onclick="removeShiftFromBasket(${shift.id})">✕ Hapus Shift</button>
+                    <div class="shift-title-banner">${shift.label}</div>
+                    ${trainsHTML}
+                </div>
+            `;
+            targetCol.innerHTML += shiftHTML;
         });
     }
 
