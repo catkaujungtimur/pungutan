@@ -494,22 +494,44 @@
     const dd = String(today.getDate()).padStart(2, '0');
     document.getElementById('target-date').value = `${yyyy}-${mm}-${dd}`;
 
-    // URUTAN HISTORIS/JAM KA GLOBAL YANG DIPERBAIKI SANGAT SPESIFIK
+    // Helper: ambil hanya angka dari nomor KA untuk pencocokan
+    // 7045, 7045A, 7045B → '7045' | 239F → '239' | 211F → '211'
+    function kaAngka(noKA) {
+        return String(noKA).replace(/[^0-9]/g, '');
+    }
+
+    // Helper: cek apakah dua nomor KA adalah kereta yang sama (berdasarkan angka)
+    function isSameKA(a, b) {
+        return kaAngka(a) === kaAngka(b);
+    }
+
+    // Urutan KA per shift — gunakan angka saja sebagai patokan urutan
     const globalKAOrder = {
-        malam: ['279', '249', '293', '211F', '147', '159', '7045A', '7045'],
-        siang: ['239F', '209', '493', '279', '249'],
-        pagi: ['147', '159', '7045A', '7045', '491', '297', '239F']
+        malam: ['279', '249', '293', '211', '147', '159', '7045'],
+        siang: ['239', '209', '493', '279', '249'],
+        pagi:  ['147', '159', '7045', '491', '297', '239']
     };
 
-    // Struktur Rangkaian KA per Shift
+    // Daftar KA yang boleh masuk tiap shift (juga pakai angka)
     const shiftKAPlans = {
-        pagi: ['147', '159', '7045A', '7045', '491', '297', '239F'],
-        siang: ['239F', '209', '493', '279', '249'],
+        pagi:  ['147', '159', '7045', '491', '297', '239'],
+        siang: ['239', '209', '493', '279', '249'],
         malam: {
-            hari_ini: ['279', '249', '293'],
-            esok_hari: ['211F', '147', '159', '7045A', '7045']
+            hari_ini:  ['279', '249', '293'],
+            esok_hari: ['211', '147', '159', '7045']
         }
     };
+
+    // Cek apakah noKA masuk dalam daftar (pakai perbandingan angka)
+    function kaInList(noKA, list) {
+        return list.some(item => isSameKA(noKA, item));
+    }
+
+    // Cari indeks urutan KA dalam globalKAOrder (pakai angka)
+    function kaOrderIndex(noKA, orderList) {
+        const idx = orderList.findIndex(item => isSameKA(noKA, item));
+        return idx === -1 ? 999 : idx;
+    }
 
     let allParsedData = [];
     let printBasket = []; // Berisi koleksi objek shift
@@ -631,48 +653,63 @@
             shiftLabel = `Dinas Malam (${dateHariIniStr})`;
             const dateEsokStr = formatDateToSheetFormat(getEsokHariString(dateDatePickerVal));
 
-            // Ambil KA Hari Ini (Malam Awal)
+            // Ambil KA Hari Ini (Malam Awal) — cocokkan pakai angka saja
             const trainsHariIni = allParsedData.filter(t => {
                 return normalizeDate(t.tanggal) === normalizeDate(dateHariIniStr) && 
-                       shiftKAPlans.malam.hari_ini.includes(t.noKA);
+                       kaInList(t.noKA, shiftKAPlans.malam.hari_ini);
             });
 
-            // Ambil KA Esok Hari (Dini Hari)
+            // Ambil KA Esok Hari (Dini Hari) — cocokkan pakai angka saja
             const trainsEsokHari = allParsedData.filter(t => {
                 return normalizeDate(t.tanggal) === normalizeDate(dateEsokStr) && 
-                       shiftKAPlans.malam.esok_hari.includes(t.noKA);
+                       kaInList(t.noKA, shiftKAPlans.malam.esok_hari);
             });
 
-            // GABUNGKAN SESUAI LOGIKA TERBARU: Hari ini dulu, baru esok harinya
-            // Urutkan KA hari ini berdasarkan daftar spesifik globalKAOrder.malam
-            trainsHariIni.sort((a, b) => {
-                return globalKAOrder.malam.indexOf(a.noKA) - globalKAOrder.malam.indexOf(b.noKA);
-            });
+            // Urutkan hari ini berdasarkan globalKAOrder.malam
+            trainsHariIni.sort((a, b) => kaOrderIndex(a.noKA, globalKAOrder.malam) - kaOrderIndex(b.noKA, globalKAOrder.malam));
+            // Urutkan esok hari berdasarkan globalKAOrder.malam
+            trainsEsokHari.sort((a, b) => kaOrderIndex(a.noKA, globalKAOrder.malam) - kaOrderIndex(b.noKA, globalKAOrder.malam));
 
-            // Urutkan KA esok hari berdasarkan daftar spesifik globalKAOrder.malam
-            trainsEsokHari.sort((a, b) => {
-                return globalKAOrder.malam.indexOf(a.noKA) - globalKAOrder.malam.indexOf(b.noKA);
-            });
-
-            // Gabungkan runtut ke bawah (Tanggal awal di atas, Tanggal besok di bawah)
+            // Gabungkan: tanggal awal di atas, esok hari di bawah
             extractedTrains = [...trainsHariIni, ...trainsEsokHari];
 
         } else {
-            // Shift Pagi & Siang (Diurutkan sesuai urutan spesifik shift masing-masing)
+            // Shift Pagi & Siang
             const targetShiftName = selectedShift === 'pagi' ? 'Pagi' : 'Siang';
             shiftLabel = `Dinas ${targetShiftName} (${dateHariIniStr})`;
             
-            const allowedKAs = shiftKAPlans[selectedShift];
             extractedTrains = allParsedData.filter(t => {
                 return normalizeDate(t.tanggal) === normalizeDate(dateHariIniStr) && 
-                       allowedKAs.includes(t.noKA);
+                       kaInList(t.noKA, shiftKAPlans[selectedShift]);
             });
 
-            // Urutkan sesuai urutan KA khusus shift tersebut
-            extractedTrains.sort((a, b) => {
-                return globalKAOrder[selectedShift].indexOf(a.noKA) - globalKAOrder[selectedShift].indexOf(b.noKA);
-            });
+            // Urutkan sesuai urutan KA shift tersebut
+            extractedTrains.sort((a, b) => kaOrderIndex(a.noKA, globalKAOrder[selectedShift]) - kaOrderIndex(b.noKA, globalKAOrder[selectedShift]));
         }
+
+        // DEDUPLIKASI: jika ada noKA dengan angka sama, gabung jadi satu.
+        // Prioritaskan entri yang punya lokomotif. Pertahankan urutan.
+        const seenAngka = new Map(); // angka → index di deduped
+        const deduped = [];
+        extractedTrains.forEach(t => {
+            const ang = kaAngka(t.noKA);
+            if (seenAngka.has(ang)) {
+                // Sudah ada — gabungkan lokomotif jika yang baru punya lok
+                const existing = deduped[seenAngka.get(ang)];
+                if ((!existing.noLok || existing.noLok === '-') && t.noLok && t.noLok !== '-') {
+                    existing.noLok = t.noLok;
+                }
+                // Jika saranaList lebih lengkap, pakai yang lebih panjang
+                if (t.saranaList.length > existing.saranaList.length) {
+                    existing.saranaList = t.saranaList;
+                    existing.totalTonase = t.totalTonase;
+                }
+            } else {
+                seenAngka.set(ang, deduped.length);
+                deduped.push({...t});
+            }
+        });
+        extractedTrains = deduped;
 
         if (extractedTrains.length === 0) {
             alert(`Tidak ditemukan data KA untuk ${shiftLabel} di database Google Sheet kamu.`);
@@ -790,14 +827,16 @@
                 let saranaRows = '';
                 let urut = 1;
 
-                if (train.noLok && train.noLok !== '-') {
+                // Baris lokomotif selalu tampil — kosong jika tidak ada di sheet
+                {
+                    const lokDisplay = (train.noLok && train.noLok !== '-') ? `<strong>${train.noLok}</strong>` : '';
                     saranaRows += `
-                        <tr>
+                        <tr style="background:#f0f7ff;">
                             <td>${urut++}</td>
-                            <td><strong>${train.noLok}</strong></td>
-                            <td>-</td>
-                            <td>-</td>
-                            <td style="text-align: left; font-style: italic; color:#718096;">Lok</td>
+                            <td>${lokDisplay}</td>
+                            <td style="color:#aaa;">-</td>
+                            <td style="color:#aaa;">-</td>
+                            <td style="text-align: left; font-style: italic; color:#718096;">Lokomotif</td>
                         </tr>
                     `;
                 }
