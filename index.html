@@ -708,7 +708,7 @@
                 currentTrain = {
                     tanggal: tanggal,
                     stn: stn,
-                    noKA: noKA.toUpperCase(),
+                    noKA: noKA.toUpperCase().replace(/\s+/g, ''),  // hapus spasi: "7045 A" → "7045A" 
                     noLok: row[22] || '-',      
                     saranaList: [],
                     totalTonase: '-'
