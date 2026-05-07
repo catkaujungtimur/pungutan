@@ -685,10 +685,29 @@
             });
     }
 
+    // Parser CSV yang benar — menangani koma di dalam tanda kutip
+    function parseCSVRow(line) {
+        const cells = [];
+        let cur = '';
+        let inQuote = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+                if (inQuote && line[i+1] === '"') { cur += '"'; i++; } // escaped quote
+                else { inQuote = !inQuote; }
+            } else if (ch === ',' && !inQuote) {
+                cells.push(cur.trim());
+                cur = '';
+            } else {
+                cur += ch;
+            }
+        }
+        cells.push(cur.trim());
+        return cells;
+    }
+
     function parseCSV(csvText) {
-        const rows = csvText.split('\n').map(row => {
-            return row.split(',').map(cell => cell.replace(/^"(.*)"$/, '$1').trim());
-        });
+        const rows = csvText.split('\n').map(line => parseCSVRow(line));
 
         allParsedData = [];
         let currentTrain = null;
@@ -701,7 +720,10 @@
             const stn = row[16];     
             const noKA = row[17];    
 
-            if (tanggal && noKA && tanggal !== "TANGGAL") {
+            // noKA valid: mengandung minimal satu angka (menangani: 279, 211F, 7045A, 239F, dll)
+            const noKAValid = noKA && /\d/.test(noKA);
+
+            if (tanggal && noKAValid && tanggal !== "TANGGAL") {
                 if (currentTrain) {
                     allParsedData.push(currentTrain);
                 }
