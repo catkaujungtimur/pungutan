@@ -3,278 +3,358 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Cetak Sarana - Multi-Column & Multi-Page</title>
+    <title>Sistem Cetak Sarana - Versi Naga 3 Kolom</title>
     <style>
+        /* CONFIGURATION KERTAS */
         :root {
-            --paper-width: 297mm;
-            --paper-height: 210mm;
+            --paper-w: 297mm;
+            --paper-h: 210mm;
+            --col-w: 90mm; /* Lebar kolom tetap */
         }
+
         body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background-color: #f0f4f8;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f0f2f5;
             margin: 0;
-            padding: 10px;
-        }
-        
-        /* PANEL KONTROL */
-        .control-panel {
-            background: white;
             padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 15px;
-            border: 1px solid #e2e8f0;
+            color: #333;
         }
-        .panel-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
-        .form-group { display: flex; flex-direction: column; gap: 4px; }
-        label { font-size: 11px; font-weight: bold; color: #4a5568; }
-        input, select { padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 13px; }
-        
-        .btn { padding: 7px 12px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; border: none; }
-        .btn-primary { background: #2b6cb0; color: white; }
-        .btn-success { background: #48bb78; color: white; }
-        .btn-danger { background: #e53e3e; color: white; }
 
-        /* ORIENTASI KERTAS */
-        .mode-landscape { --paper-width: 297mm; --paper-height: 210mm; }
-        .mode-portrait { --paper-width: 210mm; --paper-height: 297mm; }
-
-        /* SIMULASI KERTAS A4 */
-        .paper-container {
-            margin: 0 auto;
-            width: var(--paper-width);
+        /* Tombol & Panel */
+        .no-print-zone {
             background: #fff;
-            min-height: var(--paper-height);
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border: 1px solid #d1d5db;
+        }
+
+        .flex-row { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; }
+        .input-box { display: flex; flex-direction: column; gap: 5px; }
+        .input-box label { font-size: 12px; font-weight: bold; color: #4b5563; }
+        
+        input, select {
+            padding: 8px 12px;
+            border: 1px solid #bbc2ce;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            transition: 0.2s;
+        }
+        .btn-blue { background: #1d4ed8; color: white; }
+        .btn-green { background: #10b981; color: white; }
+        .btn-red { background: #ef4444; color: white; }
+        .btn:hover { opacity: 0.8; }
+
+        /* AREA PREVIEW A4 */
+        .paper-view {
+            background: white;
+            width: var(--paper-w);
+            min-height: var(--paper-h);
+            margin: 0 auto;
             padding: 10mm;
             box-sizing: border-box;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
             position: relative;
-            /* Garis bantu visual untuk halaman 1 */
-            border-bottom: 2px dashed #ff0000; 
+            overflow: visible;
         }
-        .paper-container::after {
-            content: "BATAS HALAMAN 1";
+
+        /* Layout 3 Kolom Tetap */
+        .main-grid {
+            display: flex;
+            justify-content: space-between;
+            gap: 5mm;
+            width: 100%;
+        }
+
+        .column {
+            width: var(--col-w);
+            min-height: 150mm;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .column-header {
+            background: #1f2937;
+            color: white;
+            text-align: center;
+            padding: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        /* TABEL KERETA */
+        .ka-box {
+            border: 1px solid #000;
+            background: #fff;
+            font-size: 10px;
+            page-break-inside: avoid;
+            margin-bottom: 5px;
+        }
+        .ka-head {
+            background: #e5e7eb;
+            border-bottom: 1px solid #000;
+            padding: 3px 6px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .ka-head .btn-del {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 0 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #000; padding: 2px 3px; text-align: center; }
+        th { background: #f3f4f6; font-size: 9px; }
+        .status-d { background: #fecaca !important; }
+        .total-row { font-weight: bold; background: #eee; }
+
+        /* Penanda Halaman */
+        .page-break-line {
             position: absolute;
-            top: var(--paper-height);
+            top: var(--paper-h);
+            left: 0;
+            width: 100%;
+            border-top: 2px dashed red;
+            pointer-events: none;
+        }
+        .page-break-line::after {
+            content: "BATAS HALAMAN 1 (A4)";
+            position: absolute;
             right: 10px;
+            top: -15px;
             color: red;
             font-size: 10px;
             font-weight: bold;
         }
 
-        /* GRID 3 KOLOM */
-        .grid-layout {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 5mm;
-            align-items: start;
-        }
-
-        .column {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            min-height: 100px;
-        }
-        .col-header {
-            text-align: center;
-            background: #2d3748;
-            color: white;
-            padding: 5px;
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
-            border-radius: 3px;
-        }
-
-        /* TRAIN CARD */
-        .train-block {
-            border: 1px solid #000;
-            font-size: 10px;
-            page-break-inside: avoid;
-            margin-bottom: 8px;
-        }
-        .train-header {
-            background: #f0f0f0;
-            padding: 2px 5px;
-            font-weight: bold;
-            border-bottom: 1px solid #000;
-            display: flex;
-            justify-content: space-between;
-        }
-        .remove-btn {
-            background: #e53e3e; color: white; border: none; font-size: 9px; cursor: pointer; padding: 0 4px;
-        }
-
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #000; padding: 2px; text-align: center; }
-        .status-d { background: #fed7d7 !important; }
-        .tonase-row { font-weight: bold; background: #eee; }
-
-        /* PRINT SETTINGS */
+        /* PRINT MODE */
         @media print {
-            body { background: white; padding: 0; }
-            .control-panel, .remove-btn, .paper-container::after { display: none !important; }
-            .paper-container { 
-                box-shadow: none; border: none; width: 100%; padding: 0; margin: 0;
+            @page { size: landscape; margin: 0; }
+            body { background: white; padding: 0; margin: 0; }
+            .no-print-zone, .btn-del, .page-break-line { display: none !important; }
+            .paper-view {
+                width: 100%;
+                box-shadow: none;
+                padding: 5mm;
+                margin: 0;
             }
-            .mode-landscape { @page { size: landscape; } }
-            .mode-portrait { @page { size: portrait; } }
         }
     </style>
 </head>
-<body class="mode-landscape" id="body-main">
+<body id="body-layout" class="landscape-mode">
 
-<div class="control-panel">
-    <div class="panel-row">
-        <div class="form-group">
-            <label>ID Spreadsheet:</label>
-            <input type="text" id="ss-id">
-        </div>
-        <div class="form-group">
-            <label>Bulan:</label>
-            <select id="ss-month">
-                <option value="MEI 2026">Mei 2026</option>
-                <option value="JUNI 2026">Juni 2026</option>
-            </select>
-        </div>
-        <button class="btn btn-success" onclick="saveAndFetch()">Sync Data</button>
-        
-        <div style="border-left: 1px solid #ccc; height: 30px; margin: 0 10px;"></div>
+    <div class="no-print-zone">
+        <h2 style="margin-top:0; color:#1e3a8a; font-size:18px;">🚂 Sistem Cetak Sarana - 3 Kolom Tetap</h2>
+        <div class="flex-row">
+            <div class="input-box">
+                <label>Spreadsheet ID:</label>
+                <input type="text" id="inp-id" placeholder="Paste ID di sini...">
+            </div>
+            <div class="input-box">
+                <label>Pilih Bulan (Sheet):</label>
+                <select id="inp-month">
+                    <option value="MEI 2026">Mei 2026</option>
+                    <option value="JUNI 2026">Juni 2026</option>
+                    <option value="JULI 2026">Juli 2026</option>
+                </select>
+            </div>
+            <button class="btn btn-green" onclick="syncData()">🔄 Sinkron Data</button>
+            
+            <div style="border-left:1px solid #ccc; height:40px;"></div>
 
-        <div class="form-group">
-            <label>Tanggal:</label>
-            <input type="date" id="target-date">
-        </div>
-        <div class="form-group">
-            <label>Shift:</label>
-            <select id="shift-select">
-                <option value="malam">MALAM (Kiri)</option>
-                <option value="siang">SIANG (Tengah)</option>
-                <option value="pagi">PAGI (Kanan)</option>
-            </select>
-        </div>
-        <button class="btn btn-primary" onclick="processSelection()">+ Tambah</button>
-        
-        <div class="form-group">
-            <label>Orientasi:</label>
-            <select onchange="changeOrient(this.value)">
-                <option value="mode-landscape">Landscape</option>
-                <option value="mode-portrait">Portrait</option>
-            </select>
-        </div>
-        <button class="btn btn-danger" onclick="location.reload()">🧹 Reset</button>
-    </div>
-</div>
-
-<div class="paper-container">
-    <div class="grid-layout">
-        <div class="column" id="col-malam">
-            <div class="col-header">DINAS MALAM</div>
-            <div class="content"></div>
-        </div>
-        <div class="column" id="col-siang">
-            <div class="col-header">DINAS SIANG</div>
-            <div class="content"></div>
-        </div>
-        <div class="column" id="col-pagi">
-            <div class="col-header">DINAS PAGI</div>
-            <div class="content"></div>
+            <div class="input-box">
+                <label>Tanggal Dinas:</label>
+                <input type="date" id="inp-date">
+            </div>
+            <div class="input-box">
+                <label>Pilih Kolom Shift:</label>
+                <select id="inp-shift">
+                    <option value="malam">MALAM (Kiri)</option>
+                    <option value="siang">SIANG (Tengah)</option>
+                    <option value="pagi">PAGI (Kanan)</option>
+                </select>
+            </div>
+            <button class="btn btn-blue" onclick="addShiftToBasket()">➕ Tambah ke Kertas</button>
+            <button class="btn btn-red" onclick="window.print()">🖨️ Cetak</button>
         </div>
     </div>
-</div>
+
+    <div class="paper-view" id="printable-area">
+        <div class="page-break-line"></div>
+        
+        <div class="main-grid">
+            <div class="column">
+                <div class="column-header">DINAS MALAM</div>
+                <div id="col-malam-content"></div>
+            </div>
+
+            <div class="column">
+                <div class="column-header">DINAS SIANG</div>
+                <div id="col-siang-content"></div>
+            </div>
+
+            <div class="column">
+                <div class="column-header">DINAS PAGI</div>
+                <div id="col-pagi-content"></div>
+            </div>
+        </div>
+    </div>
 
 <script>
-    let db = [];
-    const config = {
+    // 1. DATA MASTER
+    let masterDB = [];
+    const shiftLogic = {
         malam: { h0: ['279', '249', '293'], h1: ['211F', '147', '159', '7045'] },
         siang: ['239F', '209', '493', '279', '249'],
         pagi: ['147', '159', '7045', '491', '297', '239F']
     };
 
-    // Load LocalStorage
-    document.getElementById('ss-id').value = localStorage.getItem('my_ss_id') || '';
-    document.getElementById('target-date').valueAsDate = new Date();
+    // 2. INISIALISASI
+    document.getElementById('inp-id').value = localStorage.getItem('last_ss_id') || '';
+    document.getElementById('inp-date').valueAsDate = new Date();
 
-    function changeOrient(val) {
-        document.getElementById('body-main').className = val;
-    }
+    // 3. FUNGSI AMBIL DATA
+    function syncData() {
+        const id = document.getElementById('inp-id').value.trim();
+        const month = document.getElementById('inp-month').value;
+        if(!id) return alert("Isi Spreadsheet ID dulu!");
 
-    function saveAndFetch() {
-        const id = document.getElementById('ss-id').value;
-        const month = document.getElementById('ss-month').value;
-        if(!id) return alert("Masukkan ID!");
-        localStorage.setItem('my_ss_id', id);
-        
+        localStorage.setItem('last_ss_id', id);
         const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(month)}`;
-        fetch(url).then(r => r.text()).then(csv => {
-            db = parse(csv);
-            alert("Data tersinkron! Total: " + db.length + " KA.");
-        });
+
+        fetch(url)
+            .then(res => res.text())
+            .then(csv => {
+                masterDB = parseLogikaNaga(csv);
+                alert("Berhasil! Data " + masterDB.length + " KA siap digunakan.");
+            })
+            .catch(err => alert("Gagal ambil data: " + err));
     }
 
-    function parse(csv) {
-        const lines = csv.split('\n').map(l => l.split(',').map(c => c.replace(/^"(.*)"$/, '$1').trim()));
-        let results = [];
-        let cur = null;
-        lines.forEach((row, i) => {
-            if(i === 0) return;
-            if(row[15] && row[17] && row[15] !== "TANGGAL") {
-                if(cur) results.push(cur);
-                cur = { tgl: row[15], ka: row[17].toUpperCase(), lok: row[22], items: [], ton: '-' };
-            } else if(cur && row[23]) {
-                if(row[23] === 'TONASE') cur.ton = row[25];
-                else cur.items.push({ no: row[23], tm: row[24], ton: row[25], ket: row[26]||'' });
+    // 4. PARSER LOGIKA NAGA (Detail & Teliti)
+    function parseLogikaNaga(csv) {
+        const lines = csv.split('\n');
+        let tempDB = [];
+        let curKA = null;
+
+        lines.forEach((line) => {
+            const row = line.split(',').map(cell => cell.replace(/^"(.*)"$/, '$1').trim());
+            
+            // Kolom 15 = Tanggal, Kolom 17 = No KA
+            if (row[15] && row[17] && row[15] !== "TANGGAL") {
+                if (curKA) tempDB.push(curKA);
+                curKA = {
+                    tgl: row[15],
+                    ka: row[17].toUpperCase(),
+                    stn: row[16] || '',
+                    lok: row[22] || '-',
+                    sarana: [],
+                    ton: '-'
+                };
+            } else if (curKA && row[23]) {
+                if (row[23] === 'TONASE') {
+                    curKA.ton = row[25];
+                } else {
+                    curKA.sarana.push({
+                        no: row[23],
+                        tm: row[24],
+                        ton: row[25],
+                        ket: row[26] || ''
+                    });
+                }
             }
         });
-        if(cur) results.push(cur);
-        return results;
+        if (curKA) tempDB.push(curKA);
+        return tempDB;
     }
 
-    function processSelection() {
-        const dateVal = document.getElementById('target-date').value;
-        const shift = document.getElementById('shift-select').value;
-        if(!dateVal) return;
+    // 5. TAMBAH KE KERANJANG
+    function addShiftToBasket() {
+        const dateInput = document.getElementById('inp-date').value;
+        const shift = document.getElementById('inp-shift').value;
+        if (masterDB.length === 0) return alert("Sinkron data dulu!");
 
-        const d = dateVal.split('-');
-        const tglH0 = `${parseInt(d[2])}/${parseInt(d[1])}/${d[0]}`;
+        const d = dateInput.split('-');
+        const formatTglH0 = `${parseInt(d[2])}/${parseInt(d[1])}/${d[0]}`;
         
-        let selected = [];
-        if(shift === 'malam') {
-            const next = new Date(dateVal); next.setDate(next.getDate()+1);
-            const tglH1 = `${next.getDate()}/${next.getMonth()+1}/${next.getFullYear()}`;
-            const h0 = db.filter(t => t.tgl === tglH0 && config.malam.h0.includes(t.ka));
-            const h1 = db.filter(t => t.tgl === tglH1 && config.malam.h1.includes(t.ka));
-            selected = [...h0, ...h1];
+        let hasilFilter = [];
+
+        if (shift === 'malam') {
+            const dObj = new Date(dateInput);
+            dObj.setDate(dObj.getDate() + 1);
+            const formatTglH1 = `${dObj.getDate()}/${dObj.getMonth()+1}/${dObj.getFullYear()}`;
+            
+            const h0 = masterDB.filter(t => t.tgl === formatTglH0 && shiftLogic.malam.h0.includes(t.ka));
+            const h1 = masterDB.filter(t => t.tgl === formatTglH1 && shiftLogic.malam.h1.includes(t.ka));
+            hasilFilter = [...h0, ...h1];
         } else {
-            selected = db.filter(t => t.tgl === tglH0 && config[shift].includes(t.ka));
+            hasilFilter = masterDB.filter(t => t.tgl === formatTglH0 && shiftLogic[shift].includes(t.ka));
         }
 
-        if(selected.length === 0) return alert("Data KA tidak ditemukan untuk filter ini.");
-        render(selected, shift);
+        if (hasilFilter.length === 0) return alert("KA tidak ketemu untuk tanggal ini.");
+
+        renderKeKolom(hasilFilter, shift);
     }
 
-    function render(data, shift) {
-        const container = document.querySelector(`#col-${shift} .content`);
+    // 6. RENDER VISUAL
+    function renderKeKolom(data, shift) {
+        const targetDiv = document.getElementById(`col-${shift}-content`);
+        
         data.forEach(ka => {
-            const div = document.createElement('div');
-            div.className = 'train-block';
-            let rows = `<tr><td>1</td><td><b>${ka.lok}</b></td><td>-</td><td>-</td><td>LOK</td></tr>`;
-            ka.items.forEach((s, i) => {
-                rows += `<tr><td>${i+2}</td><td>${s.no}</td><td class="${s.tm==='D'?'status-d':''}">${s.tm}</td><td>${s.ton}</td><td>${s.ket}</td></tr>`;
+            const card = document.createElement('div');
+            card.className = 'ka-box';
+            
+            let rowHTML = `<tr><td>1</td><td><b>${ka.lok}</b></td><td>-</td><td>-</td><td>LOK</td></tr>`;
+            ka.sarana.forEach((s, idx) => {
+                rowHTML += `
+                    <tr>
+                        <td>${idx+2}</td>
+                        <td>${s.no}</td>
+                        <td class="${s.tm==='D'?'status-d':''}">${s.tm}</td>
+                        <td>${s.ton}</td>
+                        <td>${s.ket}</td>
+                    </tr>
+                `;
             });
 
-            div.innerHTML = `
-                <div class="train-header">
+            card.innerHTML = `
+                <div class="ka-head">
                     <span>KA ${ka.ka} (${ka.tgl})</span>
-                    <button class="remove-btn" onclick="this.parentElement.parentElement.remove()">✕</button>
+                    <button class="btn-del" onclick="this.parentElement.parentElement.remove()">✕</button>
                 </div>
                 <table>
-                    <thead><tr><th>No</th><th>Sarana</th><th>TM</th><th>Ton</th><th>Ket</th></tr></thead>
-                    <tbody>${rows}<tr class="tonase-row"><td colspan="3">TOTAL</td><td>${ka.ton}</td><td></td></tr></tbody>
+                    <thead>
+                        <tr><th>No</th><th>Sarana</th><th>TM</th><th>Ton</th><th>Ket</th></tr>
+                    </thead>
+                    <tbody>
+                        ${rowHTML}
+                        <tr class="total-row">
+                            <td colspan="3" style="text-align:right">TOTAL</td>
+                            <td>${ka.ton}</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
                 </table>
             `;
-            container.appendChild(div);
+            targetDiv.appendChild(card);
         });
     }
 </script>
