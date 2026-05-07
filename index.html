@@ -160,6 +160,109 @@
         .col-slot.col-malam { padding-right: 1mm; }
         .col-slot.col-pagi  { padding-left: 1mm; }
 
+        /* Panel Preview KA sebelum masuk lembar cetak */
+        .ka-preview-panel {
+            background: #fff;
+            border: 2px solid #2b6cb0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .ka-preview-panel h4 {
+            margin: 0 0 10px 0;
+            color: #1a365d;
+            font-size: 13px;
+        }
+        .ka-preview-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 12px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .ka-preview-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            padding: 5px 8px;
+            font-size: 13px;
+            cursor: grab;
+        }
+        .ka-preview-item:active { cursor: grabbing; }
+        .ka-preview-item.dragging { opacity: 0.4; }
+        .ka-preview-item.drag-over { border-top: 2px solid #2b6cb0; }
+        .ka-preview-item .ka-tag {
+            font-weight: bold;
+            color: #2b6cb0;
+            min-width: 60px;
+        }
+        .ka-preview-item .ka-tgl {
+            font-size: 11px;
+            color: #718096;
+            flex: 1;
+        }
+        .ka-preview-item .ka-source {
+            font-size: 10px;
+            padding: 1px 5px;
+            border-radius: 3px;
+            background: #c6f6d5;
+            color: #276749;
+        }
+        .ka-preview-item .ka-source.manual {
+            background: #fefcbf;
+            color: #744210;
+        }
+        .ka-preview-item .drag-handle {
+            color: #a0aec0;
+            font-size: 12px;
+            cursor: grab;
+        }
+        .ka-preview-item .btn-remove-ka {
+            background: none;
+            border: none;
+            color: #e53e3e;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 0 2px;
+            line-height: 1;
+        }
+        .ka-add-manual {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 8px;
+        }
+        .ka-add-manual input {
+            padding: 6px 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            font-size: 13px;
+            width: 130px;
+        }
+        .ka-add-manual select {
+            padding: 6px 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+        .ka-preview-empty {
+            text-align: center;
+            color: #a0aec0;
+            font-size: 12px;
+            padding: 10px;
+            font-style: italic;
+        }
+        .ka-hint {
+            font-size: 11px;
+            color: #718096;
+            margin-top: 6px;
+        }
+
         /* Label kosong jika slot tidak diisi */
         .col-slot-empty {
             display: flex;
@@ -422,13 +525,38 @@
             </div>
 
             <div class="form-group">
-                <button class="btn btn-primary" onclick="addCurrentShiftToBasket()">
-                     ➕ Masukkan Shift ke Lembar Cetak
+                <button class="btn btn-primary" onclick="previewShift()">
+                    🔍 Preview Daftar KA
                 </button>
             </div>
         </div>
 
-        <div style="font-size: 11px; color: #718096; margin-top: 5px;">
+        <!-- Panel Preview KA (muncul setelah klik Preview) -->
+        <div id="ka-preview-panel" class="ka-preview-panel" style="display:none;">
+            <h4 id="ka-preview-title">Daftar KA — <span style="font-weight:normal;color:#4a5568;">urutkan & edit sebelum dicetak</span></h4>
+            <ul class="ka-preview-list" id="ka-preview-list"></ul>
+
+            <!-- Tambah KA manual -->
+            <div style="border-top: 1px dashed #cbd5e0; padding-top: 10px; margin-top: 4px;">
+                <div style="font-size: 11px; font-weight: bold; color: #4a5568; margin-bottom: 6px;">➕ Tambah KA Manual:</div>
+                <div class="ka-add-manual">
+                    <input type="text" id="manual-ka-nomor" placeholder="No. KA (misal: 211F)" />
+                    <select id="manual-ka-tanggal-offset">
+                        <option value="0">Tanggal dipilih</option>
+                        <option value="1">Esok hari</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="addManualKA()">Tambahkan</button>
+                </div>
+                <div class="ka-hint">💡 Drag ☰ untuk mengubah urutan. Klik ✕ untuk hapus.</div>
+            </div>
+
+            <div style="margin-top: 12px; display: flex; gap: 10px;">
+                <button class="btn btn-success" onclick="commitPreviewToBasket()">✅ Masukkan ke Lembar Cetak</button>
+                <button class="btn btn-secondary" onclick="cancelPreview()">Batal</button>
+            </div>
+        </div>
+
+        <div style="font-size: 11px; color: #718096; margin-top: 10px;">
             *Kamu bisa memasukkan shift berkali-kali (misal malam tgl 6, siang tgl 7, pagi tgl 8) untuk digabung dalam satu lembar kertas cetak.
         </div>
     </div>
@@ -627,113 +755,191 @@
         return `${yyyy}-${mm}-${dd}`;
     }
 
-    function addCurrentShiftToBasket() {
+    // State sementara untuk preview KA sebelum masuk keranjang
+    let previewState = null; // { shiftType, shiftLabel, dateStr, trains: [{noKA, tanggal, stn, noLok, saranaList, totalTonase, isManual}] }
+
+    // Ekstrak daftar KA dari sheet untuk shift & tanggal tertentu (tanpa commit)
+    function extractTrainsForShift(selectedShift, dateDatePickerVal) {
+        const dateHariIniStr = formatDateToSheetFormat(dateDatePickerVal);
+        let trains = [];
+
+        if (selectedShift === 'malam') {
+            const dateEsokStr = formatDateToSheetFormat(getEsokHariString(dateDatePickerVal));
+
+            const trainsHariIni = allParsedData.filter(t =>
+                normalizeDate(t.tanggal) === normalizeDate(dateHariIniStr) &&
+                kaInList(t.noKA, shiftKAPlans.malam.hari_ini)
+            );
+            const trainsEsokHari = allParsedData.filter(t =>
+                normalizeDate(t.tanggal) === normalizeDate(dateEsokStr) &&
+                kaInList(t.noKA, shiftKAPlans.malam.esok_hari)
+            );
+            trainsHariIni.sort((a, b) => kaOrderIndex(a.noKA, globalKAOrder.malam) - kaOrderIndex(b.noKA, globalKAOrder.malam));
+            trainsEsokHari.sort((a, b) => kaOrderIndex(a.noKA, globalKAOrder.malam) - kaOrderIndex(b.noKA, globalKAOrder.malam));
+            trains = [...trainsHariIni, ...trainsEsokHari];
+        } else {
+            trains = allParsedData.filter(t =>
+                normalizeDate(t.tanggal) === normalizeDate(dateHariIniStr) &&
+                kaInList(t.noKA, shiftKAPlans[selectedShift])
+            );
+            trains.sort((a, b) => kaOrderIndex(a.noKA, globalKAOrder[selectedShift]) - kaOrderIndex(b.noKA, globalKAOrder[selectedShift]));
+        }
+
+        // Deduplikasi dalam satu shift
+        const seenAngka = new Map();
+        const deduped = [];
+        trains.forEach(t => {
+            const ang = kaAngka(t.noKA);
+            if (seenAngka.has(ang)) {
+                const existing = deduped[seenAngka.get(ang)];
+                if ((!existing.noLok || existing.noLok === '-') && t.noLok && t.noLok !== '-') existing.noLok = t.noLok;
+                if (t.saranaList.length > existing.saranaList.length) { existing.saranaList = t.saranaList; existing.totalTonase = t.totalTonase; }
+            } else {
+                seenAngka.set(ang, deduped.length);
+                deduped.push({...t, isManual: false});
+            }
+        });
+        return deduped;
+    }
+
+    // Langkah 1: Preview daftar KA, bisa edit sebelum masuk lembar cetak
+    function previewShift() {
         const dateDatePickerVal = document.getElementById('target-date').value;
         const selectedShift = document.getElementById('shift-select').value;
 
-        if (!dateDatePickerVal) {
-            alert('Silakan pilih tanggal dinasan terlebih dahulu!');
-            return;
-        }
-
-        // CEK DUPLIKAT: tiap shift hanya boleh ada 1x di kertas
-        const alreadyExists = printBasket.some(item => item.shiftType === selectedShift);
-        if (alreadyExists) {
-            const namaShift = selectedShift.charAt(0).toUpperCase() + selectedShift.slice(1);
-            if (!confirm(`Dinas ${namaShift} sudah ada di lembar cetak. Ganti dengan data baru?`)) {
-                return;
-            }
-            printBasket = printBasket.filter(item => item.shiftType !== selectedShift);
-        }
+        if (!dateDatePickerVal) { alert('Silakan pilih tanggal dinasan terlebih dahulu!'); return; }
 
         const dateHariIniStr = formatDateToSheetFormat(dateDatePickerVal);
-        let shiftLabel = '';
-        let extractedTrains = [];
+        const namaShift = selectedShift === 'malam' ? 'Malam' : selectedShift === 'siang' ? 'Siang' : 'Pagi';
+        const shiftLabel = `Dinas ${namaShift} (${dateHariIniStr})`;
 
-        if (selectedShift === 'malam') {
-            shiftLabel = `Dinas Malam (${dateHariIniStr})`;
-            const dateEsokStr = formatDateToSheetFormat(getEsokHariString(dateDatePickerVal));
+        const trains = extractTrainsForShift(selectedShift, dateDatePickerVal);
 
-            // Ambil KA Hari Ini (Malam Awal) — cocokkan pakai angka saja
-            const trainsHariIni = allParsedData.filter(t => {
-                return normalizeDate(t.tanggal) === normalizeDate(dateHariIniStr) && 
-                       kaInList(t.noKA, shiftKAPlans.malam.hari_ini);
-            });
+        previewState = { shiftType: selectedShift, shiftLabel, dateStr: dateDatePickerVal, trains };
 
-            // Ambil KA Esok Hari (Dini Hari) — cocokkan pakai angka saja
-            const trainsEsokHari = allParsedData.filter(t => {
-                return normalizeDate(t.tanggal) === normalizeDate(dateEsokStr) && 
-                       kaInList(t.noKA, shiftKAPlans.malam.esok_hari);
-            });
+        renderPreviewPanel();
+        document.getElementById('ka-preview-panel').style.display = 'block';
+        document.getElementById('ka-preview-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 
-            // Urutkan hari ini berdasarkan globalKAOrder.malam
-            trainsHariIni.sort((a, b) => kaOrderIndex(a.noKA, globalKAOrder.malam) - kaOrderIndex(b.noKA, globalKAOrder.malam));
-            // Urutkan esok hari berdasarkan globalKAOrder.malam
-            trainsEsokHari.sort((a, b) => kaOrderIndex(a.noKA, globalKAOrder.malam) - kaOrderIndex(b.noKA, globalKAOrder.malam));
+    function renderPreviewPanel() {
+        if (!previewState) return;
+        document.getElementById('ka-preview-title').innerHTML =
+            `Daftar KA — <strong>${previewState.shiftLabel}</strong> &nbsp;<span style="font-weight:normal;color:#4a5568;font-size:11px;">urutkan & edit sebelum dicetak</span>`;
 
-            // Gabungkan: tanggal awal di atas, esok hari di bawah
-            extractedTrains = [...trainsHariIni, ...trainsEsokHari];
-
-        } else {
-            // Shift Pagi & Siang
-            const targetShiftName = selectedShift === 'pagi' ? 'Pagi' : 'Siang';
-            shiftLabel = `Dinas ${targetShiftName} (${dateHariIniStr})`;
-            
-            extractedTrains = allParsedData.filter(t => {
-                return normalizeDate(t.tanggal) === normalizeDate(dateHariIniStr) && 
-                       kaInList(t.noKA, shiftKAPlans[selectedShift]);
-            });
-
-            // Urutkan sesuai urutan KA shift tersebut
-            extractedTrains.sort((a, b) => kaOrderIndex(a.noKA, globalKAOrder[selectedShift]) - kaOrderIndex(b.noKA, globalKAOrder[selectedShift]));
-        }
-
-        // DEDUPLIKASI: jika ada noKA dengan angka sama, gabung jadi satu.
-        // Prioritaskan entri yang punya lokomotif. Pertahankan urutan.
-        const seenAngka = new Map(); // angka → index di deduped
-        const deduped = [];
-        extractedTrains.forEach(t => {
-            const ang = kaAngka(t.noKA);
-            if (seenAngka.has(ang)) {
-                // Sudah ada — gabungkan lokomotif jika yang baru punya lok
-                const existing = deduped[seenAngka.get(ang)];
-                if ((!existing.noLok || existing.noLok === '-') && t.noLok && t.noLok !== '-') {
-                    existing.noLok = t.noLok;
-                }
-                // Jika saranaList lebih lengkap, pakai yang lebih panjang
-                if (t.saranaList.length > existing.saranaList.length) {
-                    existing.saranaList = t.saranaList;
-                    existing.totalTonase = t.totalTonase;
-                }
-            } else {
-                seenAngka.set(ang, deduped.length);
-                deduped.push({...t});
-            }
-        });
-        extractedTrains = deduped;
-
-        if (extractedTrains.length === 0) {
-            alert(`Tidak ditemukan data KA untuk ${shiftLabel} di database Google Sheet kamu.`);
+        const list = document.getElementById('ka-preview-list');
+        if (previewState.trains.length === 0) {
+            list.innerHTML = '<li class="ka-preview-empty">Tidak ada KA dari sheet. Tambahkan manual di bawah.</li>';
             return;
         }
 
-        // Generate unik ID untuk membedakan tiap KA agar bisa dihapus satu per satu
-        const shiftId = Date.now();
-        const trainsWithId = extractedTrains.map((t, index) => {
-            return {
-                ...t,
-                uniqueTrainId: `${shiftId}_${index}` // ID Unik untuk hapus KA
-            };
+        list.innerHTML = '';
+        previewState.trains.forEach((t, idx) => {
+            const li = document.createElement('li');
+            li.className = 'ka-preview-item';
+            li.draggable = true;
+            li.dataset.idx = idx;
+            const tglDisplay = t.tanggal || previewState.dateStr;
+            const sourceLabel = t.isManual
+                ? `<span class="ka-source manual">Manual</span>`
+                : `<span class="ka-source">Sheet</span>`;
+            li.innerHTML = `
+                <span class="drag-handle">☰</span>
+                <span class="ka-tag">KA ${t.noKA}</span>
+                <span class="ka-tgl">${tglDisplay} · ${t.stn || '-'}</span>
+                ${sourceLabel}
+                <button class="btn-remove-ka" onclick="removePreviewKA(${idx})" title="Hapus dari daftar">✕</button>
+            `;
+            // Drag & drop untuk ubah urutan
+            li.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', idx); li.classList.add('dragging'); });
+            li.addEventListener('dragend', () => li.classList.remove('dragging'));
+            li.addEventListener('dragover', e => { e.preventDefault(); li.classList.add('drag-over'); });
+            li.addEventListener('dragleave', () => li.classList.remove('drag-over'));
+            li.addEventListener('drop', e => {
+                e.preventDefault();
+                li.classList.remove('drag-over');
+                const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+                const toIdx = idx;
+                if (fromIdx !== toIdx) {
+                    const moved = previewState.trains.splice(fromIdx, 1)[0];
+                    previewState.trains.splice(toIdx, 0, moved);
+                    renderPreviewPanel();
+                }
+            });
+            list.appendChild(li);
         });
+    }
 
-        printBasket.push({
-            id: shiftId,
-            shiftType: selectedShift,  // 'malam' | 'siang' | 'pagi'
-            label: shiftLabel,
-            trains: trainsWithId
-        });
+    function removePreviewKA(idx) {
+        previewState.trains.splice(idx, 1);
+        renderPreviewPanel();
+    }
+
+    function addManualKA() {
+        if (!previewState) return;
+        const noKAInput = document.getElementById('manual-ka-nomor').value.trim().toUpperCase();
+        const offset = parseInt(document.getElementById('manual-ka-tanggal-offset').value);
+        if (!noKAInput) { alert('Masukkan nomor KA terlebih dahulu.'); return; }
+
+        // Cek duplikat dalam preview
+        if (previewState.trains.some(t => isSameKA(t.noKA, noKAInput))) {
+            alert(`KA ${noKAInput} sudah ada dalam daftar.`); return;
+        }
+
+        // Cari data dari sheet jika ada
+        let baseDate = previewState.dateStr;
+        if (offset === 1) {
+            baseDate = getEsokHariString(baseDate);
+        }
+        const tglStr = formatDateToSheetFormat(baseDate);
+        let fromSheet = allParsedData.find(t =>
+            normalizeDate(t.tanggal) === normalizeDate(tglStr) && isSameKA(t.noKA, noKAInput)
+        );
+
+        if (fromSheet) {
+            previewState.trains.push({...fromSheet, isManual: true});
+        } else {
+            // Tidak ada di sheet → buat entri kosong
+            previewState.trains.push({
+                noKA: noKAInput, tanggal: tglStr, stn: '-',
+                noLok: '-', saranaList: [], totalTonase: '-', isManual: true
+            });
+        }
+        document.getElementById('manual-ka-nomor').value = '';
+        renderPreviewPanel();
+    }
+
+    function cancelPreview() {
+        previewState = null;
+        document.getElementById('ka-preview-panel').style.display = 'none';
+    }
+
+    // Langkah 2: Commit preview ke keranjang cetak
+    function commitPreviewToBasket() {
+        if (!previewState) return;
+        const { shiftType, shiftLabel, trains } = previewState;
+
+        if (trains.length === 0) { alert('Daftar KA kosong. Tambahkan setidaknya satu KA.'); return; }
+
+        // Cek duplikat shift di keranjang
+        const alreadyExists = printBasket.some(item => item.shiftType === shiftType);
+        if (alreadyExists) {
+            const namaShift = shiftType.charAt(0).toUpperCase() + shiftType.slice(1);
+            if (!confirm(`Dinas ${namaShift} sudah ada di lembar cetak. Ganti dengan data baru?`)) return;
+            printBasket = printBasket.filter(item => item.shiftType !== shiftType);
+        }
+
+        const shiftId = Date.now();
+        const trainsWithId = trains.map((t, index) => ({ ...t, uniqueTrainId: `${shiftId}_${index}` }));
+
+        printBasket.push({ id: shiftId, shiftType, label: shiftLabel, trains: trainsWithId });
+
+        // Reset preview
+        previewState = null;
+        document.getElementById('ka-preview-panel').style.display = 'none';
 
         renderBasket();
+        document.getElementById('print-area-a4').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function removeShiftFromBasket(id) {
