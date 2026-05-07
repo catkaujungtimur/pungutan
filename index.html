@@ -507,6 +507,9 @@
             <div class="form-group">
                 <button class="btn btn-success" onclick="saveConfigAndReload()">Simpan & Muat Ulang</button>
             </div>
+            <div class="form-group">
+                <button class="btn btn-secondary" onclick="debugShowParsed()" style="font-size:11px;">🐛 Debug: Lihat Data Parsed</button>
+            </div>
         </div>
 
         <div class="panel-row">
@@ -1126,6 +1129,41 @@
 
         alert('Pengaturan sukses disimpan! Mengambil data baru...');
         loadData();
+    }
+
+    function debugShowParsed() {
+        if (allParsedData.length === 0) {
+            alert('Data belum dimuat. Pastikan Spreadsheet ID sudah benar dan klik Simpan & Muat Ulang.');
+            return;
+        }
+        // Buka jendela baru dengan tabel lengkap semua KA yang berhasil diparse
+        const w = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+        let html = `<html><head><title>Debug Parsed Data</title>
+        <style>
+            body { font-family: monospace; font-size: 12px; padding: 10px; }
+            table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+            th, td { border: 1px solid #ccc; padding: 4px 8px; text-align: left; }
+            th { background: #eee; }
+            h3 { margin: 10px 0 4px; color: #2b6cb0; }
+            .empty { color: #e53e3e; font-style: italic; }
+        </style></head><body>`;
+        html += `<h2>Total KA terparse: ${allParsedData.length}</h2>`;
+        allParsedData.forEach(t => {
+            const saranaCount = t.saranaList.length;
+            html += `<h3>KA ${t.noKA} | Tgl: ${t.tanggal} | Stn: ${t.stn} | Lok: ${t.noLok} | Sarana: ${saranaCount} baris | Tonase: ${t.totalTonase}</h3>`;
+            if (saranaCount === 0) {
+                html += `<p class="empty">⚠️ Tidak ada sarana! Cek baris di sheet setelah header KA ini.</p>`;
+            } else {
+                html += `<table><tr><th>#</th><th>noSarana</th><th>Status</th><th>Berat</th><th>Catatan</th></tr>`;
+                t.saranaList.forEach((s, i) => {
+                    html += `<tr><td>${i+1}</td><td>${s.noSarana}</td><td>${s.status}</td><td>${s.berat}</td><td>${s.catatan}</td></tr>`;
+                });
+                html += `</table>`;
+            }
+        });
+        html += `</body></html>`;
+        w.document.write(html);
+        w.document.close();
     }
 
     loadData();
