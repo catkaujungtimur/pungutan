@@ -382,42 +382,48 @@ function debugCSV() {
     const url = `https://docs.google.com/spreadsheets/d/${currentSpreadsheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(currentSheetName)}`;
     fetch(url).then(r => r.text()).then(csv => {
         const rows = csv.split('\n').map(l => parseCSVRow(l));
-        const w = window.open('', '_blank', 'width=1000,height=700,scrollbars=yes');
+        const w = window.open('', '_blank', 'width=1200,height=800,scrollbars=yes');
+        // Temukan baris header (baris 0) untuk lihat label kolom
+        const headerRow = rows[0] || [];
+        const maxCols = Math.max(...rows.slice(0,10).map(r=>r.length));
+        
         let html = `<html><head><title>Debug CSV</title><style>
-            body{font-family:monospace;font-size:11px;padding:10px;}
-            table{border-collapse:collapse;width:100%;}
-            th,td{border:1px solid #ccc;padding:2px 5px;white-space:nowrap;}
-            th{background:#eee;}
-            .hi{background:#fffde7;}
-            .col-p{background:#e3f2fd;font-weight:bold;}
-            .col-q{background:#e8f5e9;}
-            .col-r{background:#fce4ec;font-weight:bold;}
-            .col-w{background:#fff3e0;}
-            .col-x{background:#f3e5f5;}
+            body{font-family:monospace;font-size:10px;padding:10px;}
+            table{border-collapse:collapse;}
+            th,td{border:1px solid #ccc;padding:2px 4px;white-space:nowrap;max-width:120px;overflow:hidden;}
+            th{background:#333;color:#fff;position:sticky;top:0;}
+            tr:nth-child(even){background:#f9f9f9;}
+            .has-val{background:#fffde7 !important;font-weight:bold;color:#b7500a;}
+            .row-num{background:#eee !important;color:#666;font-weight:bold;}
+            .col-idx{background:#1a365d;color:#fff;}
         </style></head><body>`;
-        html += `<h3>CSV Debug — ${rows.length} baris total. Kolom P=15, Q=16, R=17, W=22, X=23, Y=24, Z=25</h3>`;
-        html += '<table><tr><th>Baris</th><th>P(15)=TANGGAL</th><th>Q(16)=STN</th><th>R(17)=NO KA</th><th>W(22)=LOK</th><th>X(23)=SARANA</th><th>Y(24)=TM</th><th>Z(25)=TON</th><th>AA(26)=KET</th></tr>';
-        rows.slice(0, 120).forEach((row, i) => {
-            const p  = row[15]||'';
-            const q  = row[16]||'';
-            const r  = row[17]||'';
-            const w  = row[22]||'';
-            const x  = row[23]||'';
-            const y  = row[24]||'';
-            const z  = row[25]||'';
-            const aa = row[26]||'';
-            const isHeader = p && r && r.trim() && p !== 'TANGGAL';
-            html += `<tr class="${isHeader?'hi':''}">
-                <td>${i}</td>
-                <td class="col-p">${p}</td>
-                <td class="col-q">${q}</td>
-                <td class="col-r">${r}</td>
-                <td class="col-w">${w}</td>
-                <td class="col-x">${x}</td>
-                <td>${y}</td>
-                <td>${z}</td>
-                <td>${aa}</td>
-            </tr>`;
+        
+        html += `<h3>Total: ${rows.length} baris. Header row[0] punya ${headerRow.length} kolom. Cari kolom yg isi "NO KA":</h3>`;
+        
+        // Tampilkan header row dulu untuk cari posisi kolom
+        html += '<h4>BARIS 0 (Header):</h4><table><tr><th>idx</th><th>nilai</th></tr>';
+        headerRow.forEach((v,i) => {
+            const hi = v && v.trim() ? 'has-val' : '';
+            html += `<tr><td class="col-idx">${i}</td><td class="${hi}">${v||''}</td></tr>`;
+        });
+        html += '</table>';
+        
+        // Tampilkan baris 1-80, semua kolom yang tidak kosong
+        html += '<br><h4>BARIS 1-80 (semua kolom berisi nilai):</h4><table>';
+        html += '<tr><th class="row-num">baris</th>';
+        for(let c=0;c<maxCols;c++) html += `<th>${c}</th>`;
+        html += '</tr>';
+        
+        rows.slice(1,80).forEach((row,i) => {
+            const anyVal = row.some(v => v && v.trim());
+            if (!anyVal) return; // skip baris kosong total
+            html += `<tr><td class="row-num">${i+1}</td>`;
+            for(let c=0;c<maxCols;c++) {
+                const v = row[c]||'';
+                const hi = v.trim() ? 'has-val' : '';
+                html += `<td class="${hi}">${v}</td>`;
+            }
+            html += '</tr>';
         });
         html += '</table></body></html>';
         w.document.write(html); w.document.close();
