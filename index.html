@@ -409,14 +409,27 @@ function debugCSV() {
         html += '</table>';
         
         // Tampilkan baris 1-80, semua kolom yang tidak kosong
-        html += '<br><h4>BARIS 1-80 (semua kolom berisi nilai):</h4><table>';
+        // Tampilkan RAW lines (sebelum parsing) untuk cek format CSV asli
+        const rawLines = csv.split('\n');
+        html += '<br><h4>RAW CSV — baris yang punya isi di sekitar kolom 15-17 (sebelum parsing):</h4>';
+        html += '<table><tr><th>baris</th><th>RAW LINE (kolom 15 dst)</th></tr>';
+        rawLines.slice(1, 120).forEach((line, i) => {
+            // Hanya tampilkan baris yang mengandung KTG (penanda baris KA kedatangan)
+            if (!line.includes('KTG')) return;
+            // Escape HTML
+            const safe = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            html += `<tr><td class="row-num">${i+1}</td><td style="font-size:9px;color:#333;">${safe}</td></tr>`;
+        });
+        html += '</table>';
+
+        html += '<br><h4>BARIS 1-80 (parsed, semua kolom berisi nilai):</h4><table>';
         html += '<tr><th class="row-num">baris</th>';
         for(let c=0;c<maxCols;c++) html += `<th>${c}</th>`;
         html += '</tr>';
         
         rows.slice(1,80).forEach((row,i) => {
             const anyVal = row.some(v => v && v.trim());
-            if (!anyVal) return; // skip baris kosong total
+            if (!anyVal) return;
             html += `<tr><td class="row-num">${i+1}</td>`;
             for(let c=0;c<maxCols;c++) {
                 const v = row[c]||'';
