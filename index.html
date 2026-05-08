@@ -203,6 +203,7 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
         <div class="form-group">
             <label>&nbsp;</label>
             <button class="btn btn-primary" onclick="saveConfigAndReload()">💾 Simpan & Muat Ulang</button>
+            <button class="btn btn-ghost" onclick="debugCSV()" style="font-size:11px;">🐛 Debug CSV</button>
         </div>
     </div>
 </div>
@@ -372,6 +373,55 @@ function loadData() {
             document.getElementById('ka-list-container').innerHTML =
                 `<div class="ka-list-empty" style="color:#e53e3e;">❌ Gagal memuat: ${e.message}</div>`;
         });
+}
+
+function debugCSV() {
+    if (!currentSpreadsheetId || currentSpreadsheetId === DEFAULT_ID) {
+        alert('Masukkan Spreadsheet ID dulu.'); return;
+    }
+    const url = `https://docs.google.com/spreadsheets/d/${currentSpreadsheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(currentSheetName)}`;
+    fetch(url).then(r => r.text()).then(csv => {
+        const rows = csv.split('\n').map(l => parseCSVRow(l));
+        const w = window.open('', '_blank', 'width=1000,height=700,scrollbars=yes');
+        let html = `<html><head><title>Debug CSV</title><style>
+            body{font-family:monospace;font-size:11px;padding:10px;}
+            table{border-collapse:collapse;width:100%;}
+            th,td{border:1px solid #ccc;padding:2px 5px;white-space:nowrap;}
+            th{background:#eee;}
+            .hi{background:#fffde7;}
+            .col-p{background:#e3f2fd;font-weight:bold;}
+            .col-q{background:#e8f5e9;}
+            .col-r{background:#fce4ec;font-weight:bold;}
+            .col-w{background:#fff3e0;}
+            .col-x{background:#f3e5f5;}
+        </style></head><body>`;
+        html += `<h3>CSV Debug — ${rows.length} baris total. Kolom P=15, Q=16, R=17, W=22, X=23, Y=24, Z=25</h3>`;
+        html += '<table><tr><th>Baris</th><th>P(15)=TANGGAL</th><th>Q(16)=STN</th><th>R(17)=NO KA</th><th>W(22)=LOK</th><th>X(23)=SARANA</th><th>Y(24)=TM</th><th>Z(25)=TON</th><th>AA(26)=KET</th></tr>';
+        rows.slice(0, 120).forEach((row, i) => {
+            const p  = row[15]||'';
+            const q  = row[16]||'';
+            const r  = row[17]||'';
+            const w  = row[22]||'';
+            const x  = row[23]||'';
+            const y  = row[24]||'';
+            const z  = row[25]||'';
+            const aa = row[26]||'';
+            const isHeader = p && r && r.trim() && p !== 'TANGGAL';
+            html += `<tr class="${isHeader?'hi':''}">
+                <td>${i}</td>
+                <td class="col-p">${p}</td>
+                <td class="col-q">${q}</td>
+                <td class="col-r">${r}</td>
+                <td class="col-w">${w}</td>
+                <td class="col-x">${x}</td>
+                <td>${y}</td>
+                <td>${z}</td>
+                <td>${aa}</td>
+            </tr>`;
+        });
+        html += '</table></body></html>';
+        w.document.write(html); w.document.close();
+    }).catch(e => alert('Error: '+e.message));
 }
 
 function saveConfigAndReload() {
