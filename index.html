@@ -314,34 +314,65 @@ function parseCSVRow(line) {
 function parseCSV(csvText) {
     const rows = csvText.split('\n').map(l => parseCSVRow(l));
     allParsedData = [];
+
+    // AUTO-DETECT kolom dari baris header (baris 0)
+    const headerRow = rows[0] || [];
+    function findCol(keywords) {
+        for (let i = 0; i < headerRow.length; i++) {
+            const v = (headerRow[i] || '').toUpperCase().trim();
+            if (keywords.some(k => v.includes(k))) return i;
+        }
+        return -1;
+    }
+    const cTgl = findCol(['TANGGAL','TGL']);
+    const cStn = findCol(['STASIUN','STN']);
+    const cKA  = findCol(['NO KA','NOKA','NO_KA']);
+    const cLok = findCol(['LOKOMOTIF','LOK']);
+    const cSar = findCol(['KERETA','SARANA']);
+    const cTM  = findCol(['TRAINMERK','TRAIN MERK']);
+    const cTon = findCol(['TON']);
+    const cKet = findCol(['KETERANGAN','KET']);
+
+    // Kolom yang terdeteksi (fallback ke hardcode lama jika tidak ditemukan)
+    const C_TGL = cTgl >= 0 ? cTgl : 15;
+    const C_STN = cStn >= 0 ? cStn : 16;
+    const C_KA  = cKA  >= 0 ? cKA  : 17;
+    const C_LOK = cLok >= 0 ? cLok : 22;
+    const C_SAR = cSar >= 0 ? cSar : 23;
+    const C_TM  = cTM  >= 0 ? cTM  : 24;
+    const C_TON = cTon >= 0 ? cTon : 25;
+    const C_KET = cKet >= 0 ? cKet : 26;
+
     let currentTrain = null;
     let isCollecting = false;
 
     rows.forEach((row, idx) => {
-        if (idx === 0) return; // skip header row
-        const tanggal = row[15]; // Kolom P
-        const stn     = row[16]; // Kolom Q
-        const noKA    = row[17]; // Kolom R
-        // Baris KA baru: kolom P ada tanggal, kolom R ada nama (apapun, tidak harus angka)
-        const isKAHeader = tanggal && noKA && noKA.trim() !== '' && tanggal !== 'TANGGAL';
+        if (idx === 0) return;
+        const tanggal = (row[C_TGL] || '').trim();
+        const stn     = (row[C_STN] || '').trim();
+        const noKARaw = (row[C_KA]  || '').trim();
+        const isKAHeader = tanggal && noKARaw
+                           && tanggal !== 'TANGGAL'
+                           && tanggal !== 'STASIUN KEDATANGAN';
 
         if (isKAHeader) {
             if (currentTrain) allParsedData.push(currentTrain);
             currentTrain = {
-                tanggal: tanggal.trim(),
-                stn:     stn ? stn.trim() : '-',
-                noKA:    noKA.trim().toUpperCase().replace(/\s+/g, ''), // normalisasi spasi internal
-                rowIndex: idx, // urutan asli di sheet → untuk sorting
-                noLok:    row[22] ? row[22].trim() : '-',
-                saranaList: [],
+                tanggal:     tanggal,
+                stn:         stn || '-',
+                noKA:        noKARaw.toUpperCase().replace(/\s+/g, ''),
+                rowIndex:    idx,
+                noLok:       (row[C_LOK] || '').trim() || '-',
+                saranaList:  [],
                 totalTonase: '-'
             };
             isCollecting = true;
-        } else if (currentTrain && isCollecting && row[23] && row[23].trim()) {
-            const noSarana = row[23].trim();
-            const status   = row[24] ? row[24].trim() : '';
-            const berat    = row[25] ? row[25].trim() : '';
-            const catatan  = row[26] ? row[26].trim() : '';
+        } else if (currentTrain && isCollecting) {
+            const noSarana = (row[C_SAR] || '').trim();
+            if (!noSarana) return;
+            const status  = (row[C_TM]  || '').trim();
+            const berat   = (row[C_TON] || '').trim();
+            const catatan = (row[C_KET] || '').trim();
             if (noSarana === 'TONASE') {
                 currentTrain.totalTonase = berat;
                 isCollecting = false;
