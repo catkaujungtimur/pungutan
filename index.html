@@ -203,6 +203,7 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
         <div class="form-group">
             <label>&nbsp;</label>
             <button class="btn btn-primary" onclick="saveConfigAndReload()">💾 Simpan & Muat Ulang</button>
+            <button class="btn btn-ghost" onclick="debugJSON()" style="font-size:11px;background:#553c9a;color:white;">🔬 Debug JSON</button>
             <button class="btn btn-ghost" onclick="debugCSV()" style="font-size:11px;">🐛 Debug CSV</button>
         </div>
     </div>
@@ -520,6 +521,62 @@ function loadData() {
             document.getElementById('ka-list-container').innerHTML =
                 `<div class="ka-list-empty" style="color:#e53e3e;">❌ Gagal memuat: ${e.message}</div>`;
         });
+}
+
+function debugJSON() {
+    if (!currentSpreadsheetId || currentSpreadsheetId === DEFAULT_ID) {
+        alert('Masukkan Spreadsheet ID dulu.'); return;
+    }
+    const url = `https://docs.google.com/spreadsheets/d/${currentSpreadsheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(currentSheetName)}`;
+    fetch(url).then(r => r.text()).then(raw => {
+        const json = raw.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+        if (!json) { alert('Format tidak dikenali'); return; }
+        const data = JSON.parse(json[1]);
+        const cols = data.table.cols || [];
+        const grows = data.table.rows || [];
+        const w = window.open('', '_blank', 'width=1100,height=800,scrollbars=yes');
+        let html = `<html><head><title>Debug JSON</title><style>
+            body{font-family:monospace;font-size:10px;padding:10px;}
+            table{border-collapse:collapse;}
+            th,td{border:1px solid #ccc;padding:2px 5px;white-space:nowrap;}
+            th{background:#333;color:#fff;position:sticky;top:0;}
+            .hasval{background:#fffde7;font-weight:bold;color:#b7500a;}
+            .rownum{background:#eee;color:#666;}
+        </style></head><body>`;
+
+        // Tampilkan label kolom
+        html += '<h3>LABEL KOLOM:</h3><table><tr><th>idx</th><th>label</th><th>type</th></tr>';
+        cols.forEach((c,i) => {
+            const lbl = c.label||'';
+            html += `<tr><td>${i}</td><td class="${lbl?'hasval':''}">${lbl}</td><td>${c.type||''}</td></tr>`;
+        });
+        html += '</table><br>';
+
+        // Tampilkan baris 1-80: semua sel yang ada nilainya, tampilkan v dan f
+        html += '<h3>BARIS 1-80 (v=raw, f=formatted):</h3><table>';
+        const maxC = Math.min(cols.length, 30);
+        html += '<tr><th>baris</th>';
+        for(let c=0;c<maxC;c++) html += `<th>${c}<br><small>${(cols[c].label||'').substring(0,8)}</small></th>`;
+        html += '</tr>';
+
+        grows.slice(0,80).forEach((row, i) => {
+            const cells = row.c || [];
+            const anyVal = cells.some(c => c && (c.v !== null && c.v !== undefined && c.v !== ''));
+            if (!anyVal) return;
+            html += `<tr><td class="rownum">${i+1}</td>`;
+            for(let c=0;c<maxC;c++) {
+                const cell = cells[c];
+                const v = cell ? cell.v : null;
+                const f = cell ? cell.f : null;
+                const display = (f !== null && f !== undefined && f !== '') ? f : (v !== null && v !== undefined ? v : '');
+                const hi = (display !== '') ? 'hasval' : '';
+                html += `<td class="${hi}" title="v=${v} f=${f}">${display}</td>`;
+            }
+            html += '</tr>';
+        });
+        html += '</table></body></html>';
+        w.document.write(html); w.document.close();
+    }).catch(e => alert('Error: '+e.message));
 }
 
 function debugCSV() {
