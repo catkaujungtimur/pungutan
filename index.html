@@ -158,6 +158,17 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 .font-md table { font-size: 10px !important; }
 .font-md th, .font-md td { padding: 3px 4px !important; }
 
+/* Direction toggle */
+.direction-toggle { display:flex; gap:6px; margin-bottom:10px; }
+.dir-btn {
+    flex:1; padding:6px 8px; border:1.5px solid #e2e8f0; border-radius:5px;
+    background:#f7fafc; font-size:11px; font-weight:bold; cursor:pointer;
+    text-align:center; color:#4a5568; transition:all 0.15s;
+}
+.dir-btn.active { background:#276749; color:#fff; border-color:#276749; }
+.dir-btn.active.arr { background:#276749; border-color:#276749; }
+.dir-btn.active.dep { background:#744210; border-color:#744210; }
+
 /* Empty state */
 .a4-empty { text-align: center; padding: 80px 0; color: #a0aec0; }
 .a4-empty .icon { font-size: 30px; margin-bottom: 8px; }
@@ -229,6 +240,18 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
             <input type="date" id="target-date" onchange="refreshKAList()" />
         </div>
 
+        <!-- Toggle Kedatangan / Keberangkatan -->
+        <div class="direction-toggle">
+            <div class="dir-btn arr active" id="dir-arr" onclick="selectDirection('arr')">🟢 KA Kedatangan</div>
+            <div class="dir-btn dep" id="dir-dep" onclick="selectDirection('dep')">🟠 KA Keberangkatan</div>
+        </div>
+
+        <!-- Toggle Kedatangan / Keberangkatan -->
+        <div class="direction-toggle">
+            <div class="dir-btn arr active" id="dir-arr" onclick="selectDirection('arr')">🟢 KA Kedatangan</div>
+            <div class="dir-btn dep" id="dir-dep" onclick="selectDirection('dep')">🟠 KA Keberangkatan</div>
+        </div>
+
         <!-- Daftar KA (dari sheet, urut sesuai sheet) -->
         <div class="ka-list-container" id="ka-list-container">
             <div class="ka-list-empty">Muat data terlebih dahulu.</div>
@@ -281,7 +304,9 @@ const BULAN_LIST = ["JAN 2026","FEB 2026","MAR 2026","APR 2026","MEI 2026","JUNI
 
 let currentSpreadsheetId = localStorage.getItem('ss_id') || DEFAULT_ID;
 let currentSheetName     = localStorage.getItem('ss_sheet') || autoSheet();
-let allParsedData        = []; // [{tanggal, stn, noKA, rowIndex, noLok, saranaList, totalTonase}]
+let allParsedData        = []; // KA kedatangan (default)
+let allParsedArrival     = []; // KA kedatangan (kolom P/Q/R)
+let allParsedDeparture   = []; // KA keberangkatan (kolom A/B/C)
 let printBasket          = []; // [{id, shiftType, label, trains:[...]}]
 let activeShift          = 'malam'; // tab yang aktif
 
@@ -467,53 +492,73 @@ function parseGVizJSONwithCSV(data, csvRows) {
     const C_TON = C_TM  + 1;
     const C_KET = C_TON + 1;
 
-    allParsedData = [];
-    let currentTrain = null;
-    let isCollecting = false;
-
-    grows.forEach((grow, idx) => {
-        const cells = grow.c || [];
-        const get = i => cellVal(cells[i]);
-
-        const tanggal = get(C_TGL);
-        const stn     = get(C_STN);
-        // Coba dari JSON dulu, jika kosong ambil dari CSV overlay
-        let noKARaw = get(C_KA);
-        if (!noKARaw && csvKAMap.has(idx)) {
-            noKARaw = csvKAMap.get(idx);
-        }
-
-        const isKAHeader = tanggal && noKARaw
-            && !tanggal.includes('STASIUN')
-            && tanggal !== 'TANGGAL';
-
-        if (isKAHeader) {
-            if (currentTrain) allParsedData.push(currentTrain);
-            currentTrain = {
-                tanggal:     tanggal,
-                stn:         stn || '-',
-                noKA:        noKARaw.toUpperCase().replace(/\s+/g, ''),
-                rowIndex:    idx,
-                noLok:       get(C_LOK) || '-',
-                saranaList:  [],
-                totalTonase: '-'
-            };
-            isCollecting = true;
-        } else if (currentTrain && isCollecting) {
-            const noSarana = get(C_SAR);
-            if (!noSarana) return;
-            const status  = get(C_TM);
-            const berat   = get(C_TON);
-            const catatan = get(C_KET);
-            if (noSarana.includes('TONASE') || noSarana === 'TOTAL') {
-                currentTrain.totalTonase = berat;
-                isCollecting = false;
-            } else {
-                currentTrain.saranaList.push({ noSarana, status, berat, catatan });
+    // ===== KEDATANGAN (kolom P/Q/R = C_TGL/C_STN/C_KA) =====
+    function parseSingleDirection(cTgl, cStn, cKa, cLok, cSar, cTm, cTon, cKet, csvColKA) {
+        const result = [];
+        let cur = null, collecting = false;
+        grows.forEach((grow, idx) => {
+            const cells = grow.c || [];
+            const get = i => cellVal(cells[i]);
+            const tanggal = get(cTgl);
+            const stn     = get(cStn);
+            let noKARaw   = get(cKa);
+            // Overlay CSV jika kolom KA kosong
+            if (!noKARaw && csvColKA !== null) {
+                const csvRow = csvRows[idx + 1]; // +1 karena csvRows[0]=header
+                if (csvRow) noKARaw = (csvRow[csvColKA] || '').trim();
             }
-        }
-    });
-    if (currentTrain) allParsedData.push(currentTrain);
+            const isHeader = tanggal && noKARaw
+                && !tanggal.includes('STASIUN')
+                && tanggal !== 'TANGGAL'
+                && tanggal !== 'NAMA';
+            if (isHeader) {
+                if (cur) result.push(cur);
+                cur = {
+                    tanggal: tanggal, stn: stn||'-',
+                    noKA: noKARaw.toUpperCase().replace(/\s+/g,''),
+                    rowIndex: idx,
+                    noLok: get(cLok)||'-', saranaList:[], totalTonase:'-'
+                };
+                collecting = true;
+            } else if (cur && collecting) {
+                const noSarana = get(cSar);
+                if (!noSarana) return;
+                const status  = get(cTm);
+                const berat   = get(cTon);
+                const catatan = get(cKet);
+                if (noSarana.includes('TONASE')||noSarana==='TOTAL') {
+                    cur.totalTonase = berat; collecting = false;
+                } else {
+                    cur.saranaList.push({ noSarana, status, berat, catatan });
+                }
+            }
+        });
+        if (cur) result.push(cur);
+        return result;
+    }
+
+    // Kedatangan: C_TGL, C_STN, C_KA, C_LOK, C_SAR, C_TM, C_TON, C_KET
+    // Keberangkatan: kolom 0(TGL), 1(STN), 2(NOKA), 7(LOK), 8(SAR), 9(TM), 10(TON), 11(KET)
+    // Cari indeks keberangkatan dari label kolom
+    let depKAIndices = [];
+    cols.forEach((c,i) => { if ((c.label||'').toUpperCase().includes('NO KA')) depKAIndices.push(i); });
+    const D_TGL = 0; // kolom A = index 0 di JSON
+    const D_STN = 1;
+    const D_KA  = depKAIndices.length >= 1 ? depKAIndices[0] : 2;
+    const D_LOK = findColByLabel(['STAMFORMASI LOKOMOTIF']) >= 0 ? depKAIndices.reduce((a,b)=>a<b?a:b, 99)-5 : 7;
+    // Untuk keberangkatan, stamformasi ada di kolom setelah kolom keberangkatan
+    // Lebih simpel: offset relatif dari D_KA
+    const D_LOK2 = D_KA + 5;
+    const D_SAR  = D_LOK2 + 1;
+    const D_TM   = D_SAR  + 1;
+    const D_TON  = D_TM   + 1;
+    const D_KET  = D_TON  + 1;
+
+    allParsedArrival   = parseSingleDirection(C_TGL, C_STN, C_KA, C_LOK, C_SAR, C_TM, C_TON, C_KET, 17);
+    allParsedDeparture = parseSingleDirection(D_TGL, D_STN, D_KA, D_LOK2, D_SAR, D_TM, D_TON, D_KET, 2);
+
+    // Default tampilkan sesuai activeDir
+    allParsedData = activeDir === 'dep' ? allParsedDeparture : allParsedArrival;
     refreshKAList();
 }
 
@@ -806,6 +851,16 @@ function selectShiftTab(shift) {
         tab.className = 'shift-tab';
         if (s === shift) tab.classList.add('active-'+shift);
     });
+    refreshKAList();
+}
+
+function selectDirection(dir) {
+    activeDir = dir;
+    // Update UI tombol
+    document.getElementById('dir-arr').className = 'dir-btn arr' + (dir==='arr' ? ' active' : '');
+    document.getElementById('dir-dep').className = 'dir-btn dep' + (dir==='dep' ? ' active' : '');
+    // Update data aktif
+    allParsedData = dir === 'arr' ? allParsedArrival : allParsedDeparture;
     refreshKAList();
 }
 
