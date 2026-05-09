@@ -398,20 +398,123 @@ function parseCSV(csvText) {
 // ============================================================
 function cellVal(cell) {
     if (!cell) return '';
-    // v = raw value, f = formatted string
-    // Untuk teks: v adalah string
-    // Untuk angka: v adalah number, f adalah string tampilannya
-    // Untuk tanggal: v adalah object Date
-    if (cell.v === null || cell.v === undefined) return '';
-    if (typeof cell.v === 'object' && cell.v.constructor && cell.v.constructor.name === 'Date') {
-        // Format tanggal → DD/MM/YY
-        const d = new Date(cell.v);
-        return `${d.getDate()}/${d.getMonth()+1}/${String(d.getFullYear()).slice(-2)}`;
+    if (cell.v === null || cell.v === undefined) {
+        // v null tapi mungkin ada f (formatted) — ambil jika ada
+        return (cell.f !== null && cell.f !== undefined) ? String(cell.f).trim() : '';
     }
-    // Gunakan formatted string (f) jika ada, karena lebih akurat untuk tampilan
-    // Misalnya angka 212 dengan format teks "212F" → f="212F"
+    // Tanggal: format ke DD/MM/YY
+    if (cell.v instanceof Date || (typeof cell.v === 'string' && cell.v.startsWith('Date('))) {
+        try {
+            const d = cell.v instanceof Date ? cell.v : new Date(cell.v.replace('Date(','').replace(')','').split(',').map((x,i)=>i===1?+x+1:+x).join('-'));
+            // Ambil dari formatted jika ada
+            if (cell.f) return cell.f;
+            return `${d.getDate()}/${d.getMonth()+1}/${String(d.getFullYear()).slice(-2)}`;
+        } catch(e) {}
+    }
+    // Selalu prioritaskan formatted string (f) — ini yang terlihat di layar
     if (cell.f !== undefined && cell.f !== null && cell.f !== '') return String(cell.f).trim();
     return String(cell.v).trim();
+}
+
+// Ambil CSV export untuk overlay nilai teks yang hilang dari JSON
+async function fetchCSVOverlay() {
+    const url = `https://docs.google.com/spreadsheets/d/${currentSpreadsheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(currentSheetName)}`;
+    const r = await fetch(url);
+    const text = await r.text();
+    return text.split('\n').map(l => parseCSVRow(l));
+}
+
+// Parse JSON dengan overlay CSV untuk kolom NO KA yang kosong
+function parseGVizJSONwithCSV(data, csvRows) {
+    // Bangun map: rowIndex → nilai CSV kolom 17 (NO KA kedatangan)
+    // csvRows[0] = header, csvRows[1] = data row 1, dst
+    const csvKAMap = new Map(); // rowIndex JSON (0-based) → noKA dari CSV
+    csvRows.forEach((row, i) => {
+        if (i === 0) return; // skip header CSV
+        const v = (row[17] || '').trim();
+        if (v) csvKAMap.set(i - 1, v); // JSON row index = CSV index - 1
+    });
+
+    // Sekarang parse JSON, tapi jika kolom KA null, ambil dari CSV map
+    const cols = data.table.cols || [];
+    const grows = data.table.rows || [];
+
+    function findColByLabel(keywords) {
+        for (let i = 0; i < cols.length; i++) {
+            const lbl = (cols[i].label || '').toUpperCase().trim();
+            if (keywords.some(k => lbl.includes(k))) return i;
+        }
+        return -1;
+    }
+
+    // Cari index di JSON (kolom kedatangan)
+    // Karena JSON mungkin hanya punya kolom kedatangan (tergantung query)
+    // Cari label NO KA yang KEDUA (kedatangan) atau yang pertama jika hanya satu
+    let kaIndices = [];
+    cols.forEach((c,i) => {
+        if ((c.label||'').toUpperCase().includes('NO KA')) kaIndices.push(i);
+    });
+    const C_KA_JSON = kaIndices.length >= 2 ? kaIndices[1] : (kaIndices[0] ?? 17);
+
+    const C_TGL = findColByLabel(['STASIUN KEDATANGAN TANGGAL','KEDATANGAN TANGGAL']) >= 0
+        ? findColByLabel(['STASIUN KEDATANGAN TANGGAL','KEDATANGAN TANGGAL'])
+        : (kaIndices.length >= 2 ? C_KA_JSON - 2 : 15);
+    const C_STN = C_TGL + 1;
+    const C_KA  = C_KA_JSON;
+    const C_LOK = findColByLabel(['STAMFORMASI LOKOMOTIF']) >= 0 ? findColByLabel(['STAMFORMASI LOKOMOTIF']) : C_KA + 5;
+    const C_SAR = C_LOK + 1;
+    const C_TM  = C_SAR + 1;
+    const C_TON = C_TM  + 1;
+    const C_KET = C_TON + 1;
+
+    allParsedData = [];
+    let currentTrain = null;
+    let isCollecting = false;
+
+    grows.forEach((grow, idx) => {
+        const cells = grow.c || [];
+        const get = i => cellVal(cells[i]);
+
+        const tanggal = get(C_TGL);
+        const stn     = get(C_STN);
+        // Coba dari JSON dulu, jika kosong ambil dari CSV overlay
+        let noKARaw = get(C_KA);
+        if (!noKARaw && csvKAMap.has(idx)) {
+            noKARaw = csvKAMap.get(idx);
+        }
+
+        const isKAHeader = tanggal && noKARaw
+            && !tanggal.includes('STASIUN')
+            && tanggal !== 'TANGGAL';
+
+        if (isKAHeader) {
+            if (currentTrain) allParsedData.push(currentTrain);
+            currentTrain = {
+                tanggal:     tanggal,
+                stn:         stn || '-',
+                noKA:        noKARaw.toUpperCase().replace(/\s+/g, ''),
+                rowIndex:    idx,
+                noLok:       get(C_LOK) || '-',
+                saranaList:  [],
+                totalTonase: '-'
+            };
+            isCollecting = true;
+        } else if (currentTrain && isCollecting) {
+            const noSarana = get(C_SAR);
+            if (!noSarana) return;
+            const status  = get(C_TM);
+            const berat   = get(C_TON);
+            const catatan = get(C_KET);
+            if (noSarana.includes('TONASE') || noSarana === 'TOTAL') {
+                currentTrain.totalTonase = berat;
+                isCollecting = false;
+            } else {
+                currentTrain.saranaList.push({ noSarana, status, berat, catatan });
+            }
+        }
+    });
+    if (currentTrain) allParsedData.push(currentTrain);
+    refreshKAList();
 }
 
 function parseGVizJSON(data) {
@@ -506,16 +609,28 @@ function loadData() {
     }
     document.getElementById('ka-list-container').innerHTML =
         '<div class="ka-list-empty">⏳ Memuat data dari Google Sheets...</div>';
-    // Gunakan format JSON (bukan CSV) agar semua tipe data terbaca termasuk teks huruf
-    const url = `https://docs.google.com/spreadsheets/d/${currentSpreadsheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(currentSheetName)}`;
+    // Gunakan tq query yang memformat kolom NO KA (C / kolom ke-3 kedatangan) sebagai string
+    // "format C '0'" memaksa Google menampilkan nilai number kolom C sebagai string
+    // Untuk sheet kedatangan (kolom R = index 17 di full sheet, tapi di tq = kolom ke-17)
+    // Kita gunakan query: select * dengan format pada kolom yang berisi NO KA
+    // Label: "NO KA" ada di index 2 (kedatangan) dan index 17 (full)
+    // Kita format SEMUA kolom number sebagai string agar "212F" tidak hilang
+    const tq = encodeURIComponent("select *");
+    const url = `https://docs.google.com/spreadsheets/d/${currentSpreadsheetId}/gviz/tq?tqx=out:json&tq=${tq}&sheet=${encodeURIComponent(currentSheetName)}`;
     fetch(url)
         .then(r => r.text())
         .then(raw => {
-            // Response JSON dari Google dibungkus callback: google.visualization.Query.setResponse({...})
             const json = raw.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
             if (!json) throw new Error('Format response tidak dikenali');
             const data = JSON.parse(json[1]);
-            parseGVizJSON(data);
+            // Patch: untuk kolom bertipe number yang seharusnya bisa berisi teks,
+            // kita overlay dengan data dari CSV export yang membaca formatted values
+            return fetchCSVOverlay().then(csvRows => {
+                parseGVizJSONwithCSV(data, csvRows);
+            }).catch(() => {
+                // Jika CSV gagal, tetap parse JSON saja
+                parseGVizJSON(data);
+            });
         })
         .catch(e => {
             document.getElementById('ka-list-container').innerHTML =
