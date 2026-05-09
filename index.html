@@ -354,16 +354,8 @@ function parseCSV(csvText) {
         // Baca noKA: coba C_KA dulu, jika kosong scan kolom C_KA-2 s/d C_KA+2
         // Ini menangani kasus merged cell atau kolom geser saat export CSV
         let noKARaw = (row[C_KA] || '').trim();
-        if (!noKARaw && tanggal && stn) {
-            // Scan kolom di sekitar C_KA untuk cari nilai yang bukan nama masinis
-            // Nama masinis: "NAMA 12345" (huruf + spasi + 4-6 digit)
-            const isMasinis = v => v && /^[A-Za-z ]+\s\d{4,6}$/.test(v.trim());
-            for (let c = C_KA - 2; c <= C_KA + 2; c++) {
-                if (c < 0 || c === C_TGL || c === C_STN) continue;
-                const v = (row[c] || '').trim();
-                if (v && !isMasinis(v)) { noKARaw = v; break; }
-            }
-        }
+        // Jangan ambil nilai dari kolom STN sebagai noKA
+        // (bug sebelumnya: jika C_KA kosong, scan menangkap nilai STN)
 
         const isKAHeader = tanggal && noKARaw
                            && tanggal !== 'TANGGAL'
@@ -400,6 +392,109 @@ function parseCSV(csvText) {
 }
 
 // ============================================================
+// PARSE GOOGLE VISUALIZATION JSON
+// Menangani semua tipe data dengan benar termasuk teks huruf
+// ============================================================
+function cellVal(cell) {
+    if (!cell) return '';
+    // v = raw value, f = formatted string
+    // Untuk teks: v adalah string
+    // Untuk angka: v adalah number, f adalah string tampilannya
+    // Untuk tanggal: v adalah object Date
+    if (cell.v === null || cell.v === undefined) return '';
+    if (typeof cell.v === 'object' && cell.v.constructor && cell.v.constructor.name === 'Date') {
+        // Format tanggal → DD/MM/YY
+        const d = new Date(cell.v);
+        return `${d.getDate()}/${d.getMonth()+1}/${String(d.getFullYear()).slice(-2)}`;
+    }
+    // Gunakan formatted string (f) jika ada, karena lebih akurat untuk tampilan
+    // Misalnya angka 212 dengan format teks "212F" → f="212F"
+    if (cell.f !== undefined && cell.f !== null && cell.f !== '') return String(cell.f).trim();
+    return String(cell.v).trim();
+}
+
+function parseGVizJSON(data) {
+    allParsedData = [];
+    if (!data || !data.table) return;
+
+    const cols = data.table.cols || [];
+    const grows = data.table.rows || [];
+
+    // Cari index kolom dari label header
+    function findColByLabel(keywords) {
+        for (let i = 0; i < cols.length; i++) {
+            const lbl = (cols[i].label || '').toUpperCase().trim();
+            if (keywords.some(k => lbl.includes(k))) return i;
+        }
+        return -1;
+    }
+
+    const C_TGL = findColByLabel(['TANGGAL','TGL']);
+    const C_STN = findColByLabel(['STASIUN','STN']);
+    const C_KA  = findColByLabel(['NO KA','NOKA']);
+    const C_LOK = findColByLabel(['LOKOMOTIF','LOK']);
+    const C_SAR = findColByLabel(['KERETA','SARANA']);
+    const C_TM  = findColByLabel(['TRAINMERK','TRAIN MERK']);
+    const C_TON = findColByLabel(['TON']);
+    const C_KET = findColByLabel(['KETERANGAN','KET']);
+
+    // Fallback
+    const cTgl = C_TGL >= 0 ? C_TGL : 15;
+    const cStn = C_STN >= 0 ? C_STN : 16;
+    const cKA  = C_KA  >= 0 ? C_KA  : 17;
+    const cLok = C_LOK >= 0 ? C_LOK : 22;
+    const cSar = C_SAR >= 0 ? C_SAR : 23;
+    const cTM  = C_TM  >= 0 ? C_TM  : 24;
+    const cTon = C_TON >= 0 ? C_TON : 25;
+    const cKet = C_KET >= 0 ? C_KET : 26;
+
+    let currentTrain = null;
+    let isCollecting = false;
+
+    grows.forEach((grow, idx) => {
+        const cells = grow.c || [];
+        const get = i => cellVal(cells[i]);
+
+        const tanggal = get(cTgl);
+        const stn     = get(cStn);
+        const noKARaw = get(cKA);
+
+        const isKAHeader = tanggal && noKARaw
+                           && tanggal !== 'TANGGAL'
+                           && tanggal !== 'STASIUN KEDATANGAN'
+                           && tanggal !== 'STASIUN AWAL KEBERANGKATAN';
+
+        if (isKAHeader) {
+            if (currentTrain) allParsedData.push(currentTrain);
+            currentTrain = {
+                tanggal:     tanggal,
+                stn:         stn || '-',
+                noKA:        noKARaw.toUpperCase().replace(/\s+/g, ''),
+                rowIndex:    idx,
+                noLok:       get(cLok) || '-',
+                saranaList:  [],
+                totalTonase: '-'
+            };
+            isCollecting = true;
+        } else if (currentTrain && isCollecting) {
+            const noSarana = get(cSar);
+            if (!noSarana) return;
+            const status  = get(cTM);
+            const berat   = get(cTon);
+            const catatan = get(cKet);
+            if (noSarana === 'TONASE' || noSarana === 'TOTAL' || noSarana.includes('TONASE')) {
+                currentTrain.totalTonase = berat;
+                isCollecting = false;
+            } else {
+                currentTrain.saranaList.push({ noSarana, status, berat, catatan });
+            }
+        }
+    });
+    if (currentTrain) allParsedData.push(currentTrain);
+    refreshKAList();
+}
+
+// ============================================================
 // LOAD DATA
 // ============================================================
 function loadData() {
@@ -410,10 +505,17 @@ function loadData() {
     }
     document.getElementById('ka-list-container').innerHTML =
         '<div class="ka-list-empty">⏳ Memuat data dari Google Sheets...</div>';
-    const url = `https://docs.google.com/spreadsheets/d/${currentSpreadsheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(currentSheetName)}`;
+    // Gunakan format JSON (bukan CSV) agar semua tipe data terbaca termasuk teks huruf
+    const url = `https://docs.google.com/spreadsheets/d/${currentSpreadsheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(currentSheetName)}`;
     fetch(url)
         .then(r => r.text())
-        .then(csv => parseCSV(csv))
+        .then(raw => {
+            // Response JSON dari Google dibungkus callback: google.visualization.Query.setResponse({...})
+            const json = raw.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+            if (!json) throw new Error('Format response tidak dikenali');
+            const data = JSON.parse(json[1]);
+            parseGVizJSON(data);
+        })
         .catch(e => {
             document.getElementById('ka-list-container').innerHTML =
                 `<div class="ka-list-empty" style="color:#e53e3e;">❌ Gagal memuat: ${e.message}</div>`;
