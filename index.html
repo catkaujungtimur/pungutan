@@ -204,18 +204,13 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
             <input type="text" id="spreadsheet-id-input" placeholder="Masukkan Spreadsheet ID..." />
         </div>
         <div class="form-group">
-            <label>Sheet / Bulan</label>
-            <select id="month-select">
-                <option>JAN 2026</option><option>FEB 2026</option><option>MAR 2026</option>
-                <option>APR 2026</option><option>MEI 2026</option><option>JUNI 2026</option>
-                <option>JULI 2026</option>
-            </select>
+            <label>Nama Tab Sheet (sesuai di spreadsheet)</label>
+            <input type="text" id="month-select" placeholder="contoh: MEI 2026, APR 2026..." style="min-width:180px;" oninput="localStorage.setItem('ss_sheet', this.value)" />
         </div>
         <div class="form-group">
             <label>&nbsp;</label>
             <button class="btn btn-primary" onclick="saveConfigAndReload()">💾 Simpan & Muat Ulang</button>
-            <button class="btn btn-ghost" onclick="debugJSON()" style="font-size:11px;background:#553c9a;color:white;">🔬 Debug JSON</button>
-            <button class="btn btn-ghost" onclick="debugCSV()" style="font-size:11px;">🐛 Debug CSV</button>
+            <button class="btn btn-ghost" onclick="debugJSON()" style="font-size:10px;background:#e2e8f0;color:#a0aec0;border:1px dashed #cbd5e0;">🔬 Debug</button>
         </div>
     </div>
 </div>
@@ -238,12 +233,6 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
         <div class="date-row">
             <label>Tanggal:</label>
             <input type="date" id="target-date" onchange="refreshKAList()" />
-        </div>
-
-        <!-- Toggle Kedatangan / Keberangkatan -->
-        <div class="direction-toggle">
-            <div class="dir-btn arr active" id="dir-arr" onclick="selectDirection('arr')">🟢 KA Kedatangan</div>
-            <div class="dir-btn dep" id="dir-dep" onclick="selectDirection('dep')">🟠 KA Keberangkatan</div>
         </div>
 
         <!-- Toggle Kedatangan / Keberangkatan -->
@@ -318,6 +307,10 @@ function autoSheet() {
 // Init UI
 document.getElementById('spreadsheet-id-input').value = currentSpreadsheetId;
 document.getElementById('month-select').value = currentSheetName;
+// Untuk input text, juga set value
+if (document.getElementById('month-select').tagName === 'INPUT') {
+    document.getElementById('month-select').value = currentSheetName;
+}
 const today = new Date();
 document.getElementById('target-date').value =
     `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
@@ -495,23 +488,32 @@ function parseGVizJSONwithCSV(data, csvRows) {
     // ===== KEDATANGAN (kolom P/Q/R = C_TGL/C_STN/C_KA) =====
     function parseSingleDirection(cTgl, cStn, cKa, cLok, cSar, cTm, cTon, cKet, csvColKA) {
         const result = [];
-        let cur = null, collecting = false;
+        let cur = null;
+        // 'collecting' true = sedang kumpulkan sarana
+        // 'done' true = sudah ketemu TONASE, tunggu baris baru (header KA berikutnya)
+        let collecting = false;
+
         grows.forEach((grow, idx) => {
             const cells = grow.c || [];
             const get = i => cellVal(cells[i]);
             const tanggal = get(cTgl);
             const stn     = get(cStn);
             let noKARaw   = get(cKa);
-            // Overlay CSV jika kolom KA kosong
+
+            // Overlay CSV jika kolom KA kosong (untuk KA huruf yang tidak terbaca JSON)
             if (!noKARaw && csvColKA !== null) {
                 const csvRow = csvRows[idx + 1]; // +1 karena csvRows[0]=header
                 if (csvRow) noKARaw = (csvRow[csvColKA] || '').trim();
             }
+
+            // Cek apakah ini header KA baru
             const isHeader = tanggal && noKARaw
                 && !tanggal.includes('STASIUN')
                 && tanggal !== 'TANGGAL'
                 && tanggal !== 'NAMA';
+
             if (isHeader) {
+                // Simpan KA sebelumnya
                 if (cur) result.push(cur);
                 cur = {
                     tanggal: tanggal, stn: stn||'-',
@@ -520,17 +522,25 @@ function parseGVizJSONwithCSV(data, csvRows) {
                     noLok: get(cLok)||'-', saranaList:[], totalTonase:'-'
                 };
                 collecting = true;
+
             } else if (cur && collecting) {
                 const noSarana = get(cSar);
+
+                // TONASE = batas keras akhir sarana KA ini
+                if (noSarana && (noSarana.toUpperCase().includes('TONASE') || noSarana.toUpperCase() === 'TOTAL')) {
+                    cur.totalTonase = get(cTon);
+                    collecting = false; // STOP — tunggu header KA berikutnya
+                    return;
+                }
+
+                // Baris kosong di kolom sarana = juga stop (baris pemisah antar KA)
                 if (!noSarana) return;
+
+                // Baris sarana valid — tambahkan
                 const status  = get(cTm);
                 const berat   = get(cTon);
                 const catatan = get(cKet);
-                if (noSarana.includes('TONASE')||noSarana==='TOTAL') {
-                    cur.totalTonase = berat; collecting = false;
-                } else {
-                    cur.saranaList.push({ noSarana, status, berat, catatan });
-                }
+                cur.saranaList.push({ noSarana, status, berat, catatan });
             }
         });
         if (cur) result.push(cur);
