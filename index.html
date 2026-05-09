@@ -350,7 +350,21 @@ function parseCSV(csvText) {
         if (idx === 0) return;
         const tanggal = (row[C_TGL] || '').trim();
         const stn     = (row[C_STN] || '').trim();
-        const noKARaw = (row[C_KA]  || '').trim();
+
+        // Baca noKA: coba C_KA dulu, jika kosong scan kolom C_KA-2 s/d C_KA+2
+        // Ini menangani kasus merged cell atau kolom geser saat export CSV
+        let noKARaw = (row[C_KA] || '').trim();
+        if (!noKARaw && tanggal && stn) {
+            // Scan kolom di sekitar C_KA untuk cari nilai yang bukan nama masinis
+            // Nama masinis: "NAMA 12345" (huruf + spasi + 4-6 digit)
+            const isMasinis = v => v && /^[A-Za-z ]+\s\d{4,6}$/.test(v.trim());
+            for (let c = C_KA - 2; c <= C_KA + 2; c++) {
+                if (c < 0 || c === C_TGL || c === C_STN) continue;
+                const v = (row[c] || '').trim();
+                if (v && !isMasinis(v)) { noKARaw = v; break; }
+            }
+        }
+
         const isKAHeader = tanggal && noKARaw
                            && tanggal !== 'TANGGAL'
                            && tanggal !== 'STASIUN KEDATANGAN';
