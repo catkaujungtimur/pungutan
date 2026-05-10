@@ -174,6 +174,19 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 .a4-empty .icon { font-size: 30px; margin-bottom: 8px; }
 .a4-empty p { font-size: 12px; font-style: italic; }
 
+/* Dialog custom */
+.overlay-dialog { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; }
+.overlay-dialog.show { display:flex; }
+.dialog-box { background:#fff; border-radius:10px; padding:22px; max-width:340px; width:90%; box-shadow:0 8px 30px rgba(0,0,0,0.3); }
+.dialog-box h4 { margin:0 0 8px; font-size:14px; color:#1a365d; }
+.dialog-box p  { margin:0 0 16px; font-size:12px; color:#4a5568; }
+.dialog-btns   { display:flex; gap:8px; flex-direction:column; }
+.dialog-btns .btn { font-size:13px; padding:9px; }
+
+/* Multi-page A4 ke bawah */
+.a4-stack { display:flex; flex-direction:column; gap:20px; }
+.a4-page-label { font-size:10px; color:#a0aec0; text-align:center; margin-bottom:4px; font-style:italic; }
+
 /* ===== PRINT ===== */
 @media print {
     @page { size: A4 portrait; margin: 8mm 6mm; }
@@ -198,19 +211,48 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 <!-- CONFIG PANEL -->
 <div class="config-panel">
     <h2>🚆 Sistem Cetak Ringkas Sarana</h2>
-    <div class="config-row">
-        <div class="form-group" style="flex:1;min-width:260px;">
+    <div class="config-row" style="flex-direction:column;gap:8px;">
+        <div class="form-group">
             <label>Google Spreadsheet ID</label>
-            <input type="text" id="spreadsheet-id-input" placeholder="Masukkan Spreadsheet ID..." />
+            <input type="text" id="spreadsheet-id-input" placeholder="Masukkan Spreadsheet ID..." style="width:100%;max-width:600px;" />
         </div>
         <div class="form-group">
             <label>Nama Tab Sheet (sesuai di spreadsheet)</label>
-            <input type="text" id="month-select" placeholder="contoh: MEI 2026, APR 2026..." style="min-width:180px;" oninput="localStorage.setItem('ss_sheet', this.value)" />
+            <input type="text" id="month-select" placeholder="contoh: MEI 2026, APR 2026..." style="width:100%;max-width:600px;" oninput="localStorage.setItem('ss_sheet', this.value)" />
         </div>
         <div class="form-group">
-            <label>&nbsp;</label>
+            <label>Tanggal Dinasan</label>
+            <input type="date" id="target-date-config" style="max-width:200px;" onchange="syncDate(this.value)" />
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <button class="btn btn-primary" onclick="saveConfigAndReload()">💾 Simpan & Muat Ulang</button>
             <button class="btn btn-ghost" onclick="debugJSON()" style="font-size:10px;background:#e2e8f0;color:#a0aec0;border:1px dashed #cbd5e0;">🔬 Debug</button>
+        </div>
+    </div>
+</div>
+
+<!-- Dialog 3 Pilihan -->
+<div class="overlay-dialog" id="three-choice-dialog">
+    <div class="dialog-box">
+        <h4>⚠️ Shift sudah ada</h4>
+        <p id="dialog-msg">Dinas sudah ada di lembar cetak. Apa yang ingin kamu lakukan?</p>
+        <div class="dialog-btns">
+            <button class="btn btn-success" onclick="resolveDialog('tambah')">➕ Tambahkan ke yang sudah ada</button>
+            <button class="btn btn-primary" onclick="resolveDialog('ganti')">🔄 Ganti seluruhnya</button>
+            <button class="btn btn-ghost"   onclick="resolveDialog('batal')">✕ Batal</button>
+        </div>
+    </div>
+</div>
+
+<!-- Dialog 3 Pilihan -->
+<div class="overlay-dialog" id="three-choice-dialog">
+    <div class="dialog-box">
+        <h4>⚠️ Shift sudah ada</h4>
+        <p id="dialog-msg">Dinas sudah ada di lembar cetak.</p>
+        <div class="dialog-btns">
+            <button class="btn btn-success" onclick="resolveDialog('tambah')">➕ Tambahkan ke yang sudah ada</button>
+            <button class="btn btn-primary" onclick="resolveDialog('ganti')">🔄 Ganti seluruhnya</button>
+            <button class="btn btn-ghost"   onclick="resolveDialog('batal')">✕ Batal</button>
         </div>
     </div>
 </div>
@@ -229,17 +271,20 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
             <div class="shift-tab" id="tab-pagi"  onclick="selectShiftTab('pagi')">🌅 Pagi</div>
         </div>
 
-        <!-- Date picker -->
-        <div class="date-row">
-            <label>Tanggal:</label>
-            <input type="date" id="target-date" onchange="refreshKAList()" />
-        </div>
+        <!-- Hidden date input untuk addCheckedToBasket -->
+        <input type="date" id="target-date" style="display:none;" />
 
         <!-- Toggle Kedatangan / Keberangkatan -->
         <div class="direction-toggle">
             <div class="dir-btn arr active" id="dir-arr" onclick="selectDirection('arr')">🟢 KA Kedatangan</div>
             <div class="dir-btn dep" id="dir-dep" onclick="selectDirection('dep')">🟠 KA Keberangkatan</div>
         </div>
+
+        <!-- Tombol Refresh -->
+        <button class="btn btn-ghost" onclick="hardRefresh()" style="width:100%;margin-bottom:8px;font-size:12px;background:#edf2f7;">🔄 Refresh Tampilan</button>
+
+        <!-- Tombol Refresh -->
+        <button class="btn btn-ghost" onclick="hardRefresh()" style="width:100%;margin-bottom:8px;font-size:12px;background:#edf2f7;">🔄 Refresh Tampilan</button>
 
         <!-- Daftar KA (dari sheet, urut sesuai sheet) -->
         <div class="ka-list-container" id="ka-list-container">
@@ -267,17 +312,21 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
             <button class="btn btn-danger"   onclick="clearBasket()">🧹 Kosongkan</button>
         </div>
 
-        <div id="print-area-a4" class="a4-page font-sm">
-            <div id="basket-empty-state" class="a4-empty">
-                <div class="icon">📄</div>
-                <p>Centang KA di panel kiri lalu klik <strong>Tambah ke Cetak</strong>.</p>
-                <p style="margin-top:6px;font-size:10px;color:#cbd5e0;">Kolom Malam (kiri) · Siang (tengah) · Pagi (kanan)</p>
+        <div id="print-area-wrapper">
+            <div id="print-area-a4" class="a4-page font-sm">
+                <div id="basket-empty-state" class="a4-empty">
+                    <div class="icon">📄</div>
+                    <p>Centang KA di panel kiri lalu klik <strong>Tambah ke Cetak</strong>.</p>
+                    <p style="margin-top:6px;font-size:10px;color:#cbd5e0;">Kolom Malam (kiri) · Siang (tengah) · Pagi (kanan)</p>
+                </div>
+                <div class="three-col-grid" id="basket-content" style="display:none;">
+                    <div class="col-slot col-malam" id="col-malam"><div class="col-slot-empty" id="empty-malam">— Malam —</div></div>
+                    <div class="col-slot col-siang" id="col-siang"><div class="col-slot-empty" id="empty-siang">— Siang —</div></div>
+                    <div class="col-slot col-pagi"  id="col-pagi" ><div class="col-slot-empty" id="empty-pagi" >— Pagi —</div></div>
+                </div>
             </div>
-            <div class="three-col-grid" id="basket-content" style="display:none;">
-                <div class="col-slot col-malam" id="col-malam"><div class="col-slot-empty" id="empty-malam">— Malam —</div></div>
-                <div class="col-slot col-siang" id="col-siang"><div class="col-slot-empty" id="empty-siang">— Siang —</div></div>
-                <div class="col-slot col-pagi"  id="col-pagi" ><div class="col-slot-empty" id="empty-pagi" >— Pagi —</div></div>
-            </div>
+            <!-- Overflow pages (muncul otomatis jika konten melebihi 1 halaman) -->
+            <div id="overflow-pages"></div>
         </div>
     </div>
 
@@ -285,6 +334,62 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 </div><!-- /container -->
 
 <script>
+// ============================================================
+// DIALOG 3 PILIHAN
+// ============================================================
+let _dialogResolve = null;
+function showThreeChoiceDialog(shiftName) {
+    return new Promise(resolve => {
+        _dialogResolve = resolve;
+        document.getElementById('dialog-msg').textContent =
+            `Dinas ${shiftName} sudah ada di lembar cetak. Apa yang ingin kamu lakukan?`;
+        document.getElementById('three-choice-dialog').classList.add('show');
+    });
+}
+function resolveDialog(choice) {
+    document.getElementById('three-choice-dialog').classList.remove('show');
+    if (_dialogResolve) { _dialogResolve(choice); _dialogResolve = null; }
+}
+
+// ============================================================
+// DIALOG 3 PILIHAN
+// ============================================================
+let _dialogResolve = null;
+function showThreeChoiceDialog(shiftName) {
+    return new Promise(resolve => {
+        _dialogResolve = resolve;
+        document.getElementById('dialog-msg').textContent =
+            `Dinas ${shiftName} sudah ada di lembar cetak. Apa yang ingin kamu lakukan?`;
+        document.getElementById('three-choice-dialog').classList.add('show');
+    });
+}
+function resolveDialog(choice) {
+    document.getElementById('three-choice-dialog').classList.remove('show');
+    if (_dialogResolve) { _dialogResolve(choice); _dialogResolve = null; }
+}
+
+// Sync tanggal: config date picker → picker date
+function syncDate(val) {
+    const picker = document.getElementById('target-date');
+    if (picker) { picker.value = val; refreshKAList(); }
+}
+
+// Refresh tampilan: reset UI ke state aktif saat ini tanpa reload halaman
+function hardRefresh() {
+    // Pastikan arah dan shift sudah terset dengan benar
+    allParsedData = activeDir === 'dep' ? allParsedDeparture : allParsedArrival;
+    // Re-apply direction button state
+    document.getElementById('dir-arr').className = 'dir-btn arr' + (activeDir==='arr' ? ' active' : '');
+    document.getElementById('dir-dep').className = 'dir-btn dep' + (activeDir==='dep' ? ' active' : '');
+    // Re-apply shift tab state
+    ['malam','siang','pagi'].forEach(s => {
+        const tab = document.getElementById('tab-'+s);
+        tab.className = 'shift-tab';
+        if (s === activeShift) tab.classList.add('active-'+activeShift);
+    });
+    refreshKAList();
+}
+
 // ============================================================
 // CONFIG & STATE
 // ============================================================
@@ -307,6 +412,10 @@ function autoSheet() {
 // Init UI
 document.getElementById('spreadsheet-id-input').value = currentSpreadsheetId;
 document.getElementById('month-select').value = currentSheetName;
+// Sync kedua date picker
+const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+document.getElementById('target-date-config').value = todayStr;
+document.getElementById('target-date').value = todayStr;
 // Untuk input text, juga set value
 if (document.getElementById('month-select').tagName === 'INPUT') {
     document.getElementById('month-select').value = currentSheetName;
@@ -596,12 +705,16 @@ function parseGVizJSONwithCSV(data, csvRows) {
                 // Kosong = lewati (baris pemisah)
                 if (!noSarana) return;
 
-                // Sarana valid
+                // Sarana valid — ambil juga warna background dari cell JSON
+                const sarCell = cells[cSar];
+                const sarBg   = sarCell && sarCell.p && sarCell.p['background-color']
+                    ? sarCell.p['background-color'] : null;
                 cur.saranaList.push({
                     noSarana,
-                    status:  get(cTm),
-                    berat:   get(cTon),
-                    catatan: get(cKet)
+                    status:    get(cTm),
+                    berat:     get(cTon),
+                    catatan:   get(cKet),
+                    sarBgColor: sarBg  // warna background kolom sarana dari sheet
                 });
             }
         });
@@ -1009,7 +1122,7 @@ function clearChecks() {
 // ============================================================
 // ADD CHECKED KA → BASKET
 // ============================================================
-function addCheckedToBasket() {
+async function addCheckedToBasket() {
     const checked = [...document.querySelectorAll('.ka-pick-item input[type=checkbox]:checked')];
     if (checked.length === 0) { alert('Centang setidaknya satu KA terlebih dahulu.'); return; }
 
@@ -1039,16 +1152,15 @@ function addCheckedToBasket() {
         if (!seenKA.has(key)) { seenKA.add(key); uniqueTrains.push(t); }
     });
 
-    // Jika shift ini sudah ada di basket, tanya ganti atau tambah
+    // Jika shift ini sudah ada di basket, tampilkan dialog 3 pilihan
     const existing = printBasket.find(b => b.shiftType === shiftType);
     if (existing) {
-        const choice = confirm(
-            `Dinas ${shiftNames[shiftType]} sudah ada di lembar cetak.\n\nOK = Ganti seluruhnya\nBatal = Tambahkan ke yang sudah ada`
-        );
-        if (choice) {
+        // Dialog custom 3 tombol (Tambahkan / Ganti / Batal)
+        const choice = await showThreeChoiceDialog(shiftNames[shiftType]);
+        if (choice === 'batal') { clearChecks(); return; }
+        if (choice === 'ganti') {
             printBasket = printBasket.filter(b => b.shiftType !== shiftType);
-        } else {
-            // Tambah ke existing, hindari duplikat
+        } else { // 'tambah'
             const existingKeys = new Set(existing.trains.map(t => t.noKA.toUpperCase()+'|'+normalizeDate(t.tanggal)));
             const newTrains = uniqueTrains.filter(t => !existingKeys.has(t.noKA.toUpperCase()+'|'+normalizeDate(t.tanggal)));
             const shiftId2 = Date.now();
@@ -1072,12 +1184,14 @@ function addCheckedToBasket() {
 // ============================================================
 function buildTrainHTML(train) {
     let rows = '', urut = 1;
-    // Lokomotif: tidak diberi nomor urut
     const lok = (train.noLok && train.noLok !== '-') ? `<strong>${train.noLok}</strong>` : '<span style="color:#ccc;">—</span>';
-    rows += `<tr class="lok-row"><td style="color:#aaa;font-style:italic;">Lok</td><td>${lok}</td><td style="color:#aaa;">-</td><td style="color:#aaa;">-</td><td style="font-style:italic;color:#718096;"></td></tr>`;
+    rows += `<tr class="lok-row"><td style="color:#aaa;font-style:italic;">Lok</td><td>${lok}</td><td style="color:#aaa;">-</td><td style="color:#aaa;">-</td><td></td></tr>`;
     train.saranaList.forEach(s => {
+        // Warna background dari spreadsheet (jika ada)
+        const bgStyle = s.bgColor ? `style="background:${s.bgColor} !important;"` : '';
         const dCls = s.status === 'D' ? 'class="status-d"' : '';
-        rows += `<tr><td>${urut++}</td><td>${s.noSarana}</td><td ${dCls}>${s.status}</td><td>${s.berat}</td><td>${s.catatan}</td></tr>`;
+        const sarStyle = s.sarBgColor ? `style="background:${s.sarBgColor} !important;font-weight:bold;"` : '';
+        rows += `<tr ${bgStyle}><td>${urut++}</td><td ${sarStyle}>${s.noSarana}</td><td ${dCls}>${s.status}</td><td>${s.berat}</td><td>${s.catatan}</td></tr>`;
     });
     return `<div class="train-block">
         <button class="remove-train-btn" onclick="removeTrain('${train.uniqueTrainId}')">✕</button>
@@ -1123,6 +1237,45 @@ function renderBasket() {
             ${shift.trains.map(t => buildTrainHTML(t)).join('')}
         </div>`;
     });
+
+    // Deteksi overflow: cek apakah konten melebihi tinggi A4 (297mm ≈ 1122px pada 96dpi)
+    setTimeout(() => checkOverflow(), 100);
+}
+
+function checkOverflow() {
+    const A4_HEIGHT_PX = 1122; // 297mm pada 96dpi
+    const wrapper = document.getElementById('overflow-pages');
+    if (!wrapper) return;
+    wrapper.innerHTML = '';
+
+    const cols = {
+        malam: document.getElementById('col-malam'),
+        siang: document.getElementById('col-siang'),
+        pagi:  document.getElementById('col-pagi')
+    };
+
+    // Cek tinggi kolom tertinggi
+    const heights = Object.values(cols).map(c => c ? c.scrollHeight : 0);
+    const maxH = Math.max(...heights);
+
+    if (maxH > A4_HEIGHT_PX) {
+        // Hitung jumlah halaman yang dibutuhkan
+        const pages = Math.ceil(maxH / A4_HEIGHT_PX);
+        let warningHTML = '';
+        for (let p = 2; p <= pages; p++) {
+            warningHTML += `
+                <div style="margin-top:10px;">
+                    <div class="a4-page-label">⚠️ Halaman ${p} — Konten melebihi 1 lembar kertas</div>
+                    <div class="a4-page font-sm" style="border:2px dashed #e53e3e;opacity:0.6;min-height:${A4_HEIGHT_PX * 0.3}px;display:flex;align-items:center;justify-content:center;">
+                        <p style="color:#e53e3e;font-size:12px;text-align:center;">
+                            ⚠️ Konten terlalu panjang<br>
+                            <small>Kurangi KA atau perkecil ukuran font</small>
+                        </p>
+                    </div>
+                </div>`;
+        }
+        wrapper.innerHTML = warningHTML;
+    }
 }
 
 function removeShift(id) {
