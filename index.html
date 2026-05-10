@@ -465,107 +465,152 @@ function parseGVizJSONwithCSV(data, csvRows) {
         return -1;
     }
 
-    // Cari index di JSON (kolom kedatangan)
-    // Karena JSON mungkin hanya punya kolom kedatangan (tergantung query)
-    // Cari label NO KA yang KEDUA (kedatangan) atau yang pertama jika hanya satu
+    // ================================================================
+    // DETEKSI KOLOM OTOMATIS dari label header JSON
+    // Struktur sheet: [Keberangkatan A-L] [OKT M-O] [Kedatangan P-AA]
+    // ================================================================
+
+    // Cari semua indeks kolom "NO KA" (ada 2: keberangkatan & kedatangan)
     let kaIndices = [];
     cols.forEach((c,i) => {
-        if ((c.label||'').toUpperCase().includes('NO KA')) kaIndices.push(i);
+        if ((c.label||'').toUpperCase().trim() === 'NO KA') kaIndices.push(i);
     });
-    const C_KA_JSON = kaIndices.length >= 2 ? kaIndices[1] : (kaIndices[0] ?? 17);
 
-    const C_TGL = findColByLabel(['STASIUN KEDATANGAN TANGGAL','KEDATANGAN TANGGAL']) >= 0
-        ? findColByLabel(['STASIUN KEDATANGAN TANGGAL','KEDATANGAN TANGGAL'])
-        : (kaIndices.length >= 2 ? C_KA_JSON - 2 : 15);
-    const C_STN = C_TGL + 1;
-    const C_KA  = C_KA_JSON;
-    const C_LOK = findColByLabel(['STAMFORMASI LOKOMOTIF']) >= 0 ? findColByLabel(['STAMFORMASI LOKOMOTIF']) : C_KA + 5;
-    const C_SAR = C_LOK + 1;
-    const C_TM  = C_SAR + 1;
-    const C_TON = C_TM  + 1;
-    const C_KET = C_TON + 1;
+    // Cari semua indeks "STAMFORMASI LOKOMOTIF" (ada 2)
+    let lokIndices = [];
+    cols.forEach((c,i) => {
+        if ((c.label||'').toUpperCase().includes('STAMFORMASI')) lokIndices.push(i);
+    });
 
-    // ===== KEDATANGAN (kolom P/Q/R = C_TGL/C_STN/C_KA) =====
+    // Cari semua indeks "KERETA" / sarana (ada 2)
+    let sarIndices = [];
+    cols.forEach((c,i) => {
+        if ((c.label||'').toUpperCase().trim() === 'KERETA') sarIndices.push(i);
+    });
+
+    // Cari semua indeks "TRAINMERK" (ada 2)
+    let tmIndices = [];
+    cols.forEach((c,i) => {
+        if ((c.label||'').toUpperCase().includes('TRAINMERK')) tmIndices.push(i);
+    });
+
+    // Cari semua indeks "TON" (ada 2)
+    let tonIndices = [];
+    cols.forEach((c,i) => {
+        if ((c.label||'').toUpperCase().trim() === 'TON') tonIndices.push(i);
+    });
+
+    // Cari semua indeks "KETERANGAN" (ada 2)
+    let ketIndices = [];
+    cols.forEach((c,i) => {
+        if ((c.label||'').toUpperCase().includes('KETERANGAN')) ketIndices.push(i);
+    });
+
+    // Keberangkatan = set PERTAMA (indeks lebih kecil)
+    // Kedatangan = set KEDUA (indeks lebih besar)
+    const D_KA  = kaIndices[0]  ?? 2;
+    const D_TGL = D_KA - 2;
+    const D_STN = D_KA - 1;
+    const D_LOK = lokIndices[0] ?? (D_KA + 5);
+    const D_SAR = sarIndices[0] ?? (D_LOK + 1);
+    const D_TM  = tmIndices[0]  ?? (D_SAR + 1);
+    const D_TON = tonIndices[0] ?? (D_TM  + 1);
+    const D_KET = ketIndices[0] ?? (D_TON + 1);
+
+    const C_KA  = kaIndices[1]  ?? 17;
+    const C_TGL = C_KA - 2;
+    const C_STN = C_KA - 1;
+    const C_LOK = lokIndices[1] ?? (C_KA + 5);
+    const C_SAR = sarIndices[1] ?? (C_LOK + 1);
+    const C_TM  = tmIndices[1]  ?? (C_SAR + 1);
+    const C_TON = tonIndices[1] ?? (C_TM  + 1);
+    const C_KET = ketIndices[1] ?? (C_TON + 1);
+
+    // ================================================================
+    // PARSER SATU ARAH
+    // Kunci: baris header KA juga mengandung LOK dan SARANA PERTAMA
+    // di baris yang sama. Baris berikutnya adalah sarana ke-2, dst.
+    // TONASE = batas keras akhir KA. Setelah TONASE, tunggu header baru.
+    // ================================================================
     function parseSingleDirection(cTgl, cStn, cKa, cLok, cSar, cTm, cTon, cKet, csvColKA) {
         const result = [];
         let cur = null;
-        // 'collecting' true = sedang kumpulkan sarana
-        // 'done' true = sudah ketemu TONASE, tunggu baris baru (header KA berikutnya)
         let collecting = false;
 
         grows.forEach((grow, idx) => {
             const cells = grow.c || [];
             const get = i => cellVal(cells[i]);
+
             const tanggal = get(cTgl);
             const stn     = get(cStn);
             let noKARaw   = get(cKa);
 
-            // Overlay CSV jika kolom KA kosong (untuk KA huruf yang tidak terbaca JSON)
+            // Overlay CSV untuk KA huruf yang tidak terbaca JSON (tipe number)
             if (!noKARaw && csvColKA !== null) {
-                const csvRow = csvRows[idx + 1]; // +1 karena csvRows[0]=header
+                const csvRow = csvRows[idx + 1];
                 if (csvRow) noKARaw = (csvRow[csvColKA] || '').trim();
             }
 
-            // Cek apakah ini header KA baru
             const isHeader = tanggal && noKARaw
                 && !tanggal.includes('STASIUN')
                 && tanggal !== 'TANGGAL'
                 && tanggal !== 'NAMA';
 
             if (isHeader) {
-                // Simpan KA sebelumnya
                 if (cur) result.push(cur);
+
+                // Baris header KA juga berisi LOK dan SARANA PERTAMA
+                const lokVal  = get(cLok) || '-';
+                const sar1    = get(cSar);  // sarana pertama (baris sama dgn header)
+                const tm1     = get(cTm);
+                const berat1  = get(cTon);
+                const cat1    = get(cKet);
+
                 cur = {
                     tanggal: tanggal, stn: stn||'-',
                     noKA: noKARaw.toUpperCase().replace(/\s+/g,''),
                     rowIndex: idx,
-                    noLok: get(cLok)||'-', saranaList:[], totalTonase:'-'
+                    noLok: lokVal,
+                    saranaList: [],
+                    totalTonase: '-'
                 };
+
+                // Tambah sarana pertama jika ada dan bukan TONASE
+                if (sar1 && !sar1.toUpperCase().includes('TONASE')) {
+                    cur.saranaList.push({ noSarana: sar1, status: tm1, berat: berat1, catatan: cat1 });
+                } else if (sar1 && sar1.toUpperCase().includes('TONASE')) {
+                    cur.totalTonase = berat1;
+                }
                 collecting = true;
 
             } else if (cur && collecting) {
                 const noSarana = get(cSar);
 
-                // TONASE = batas keras akhir sarana KA ini
-                if (noSarana && (noSarana.toUpperCase().includes('TONASE') || noSarana.toUpperCase() === 'TOTAL')) {
+                // TONASE = batas keras
+                if (noSarana && noSarana.toUpperCase().includes('TONASE')) {
                     cur.totalTonase = get(cTon);
-                    collecting = false; // STOP — tunggu header KA berikutnya
+                    collecting = false;
                     return;
                 }
 
-                // Baris kosong di kolom sarana = juga stop (baris pemisah antar KA)
+                // Kosong = lewati (baris pemisah)
                 if (!noSarana) return;
 
-                // Baris sarana valid — tambahkan
-                const status  = get(cTm);
-                const berat   = get(cTon);
-                const catatan = get(cKet);
-                cur.saranaList.push({ noSarana, status, berat, catatan });
+                // Sarana valid
+                cur.saranaList.push({
+                    noSarana,
+                    status:  get(cTm),
+                    berat:   get(cTon),
+                    catatan: get(cKet)
+                });
             }
         });
         if (cur) result.push(cur);
         return result;
     }
 
-    // Kedatangan: C_TGL, C_STN, C_KA, C_LOK, C_SAR, C_TM, C_TON, C_KET
-    // Keberangkatan: kolom 0(TGL), 1(STN), 2(NOKA), 7(LOK), 8(SAR), 9(TM), 10(TON), 11(KET)
-    // Cari indeks keberangkatan dari label kolom
-    let depKAIndices = [];
-    cols.forEach((c,i) => { if ((c.label||'').toUpperCase().includes('NO KA')) depKAIndices.push(i); });
-    const D_TGL = 0; // kolom A = index 0 di JSON
-    const D_STN = 1;
-    const D_KA  = depKAIndices.length >= 1 ? depKAIndices[0] : 2;
-    const D_LOK = findColByLabel(['STAMFORMASI LOKOMOTIF']) >= 0 ? depKAIndices.reduce((a,b)=>a<b?a:b, 99)-5 : 7;
-    // Untuk keberangkatan, stamformasi ada di kolom setelah kolom keberangkatan
-    // Lebih simpel: offset relatif dari D_KA
-    const D_LOK2 = D_KA + 5;
-    const D_SAR  = D_LOK2 + 1;
-    const D_TM   = D_SAR  + 1;
-    const D_TON  = D_TM   + 1;
-    const D_KET  = D_TON  + 1;
-
     allParsedArrival   = parseSingleDirection(C_TGL, C_STN, C_KA, C_LOK, C_SAR, C_TM, C_TON, C_KET, 17);
-    allParsedDeparture = parseSingleDirection(D_TGL, D_STN, D_KA, D_LOK2, D_SAR, D_TM, D_TON, D_KET, 2);
+    allParsedDeparture = parseSingleDirection(D_TGL, D_STN, D_KA, D_LOK, D_SAR, D_TM, D_TON, D_KET, 2);
 
     // Default tampilkan sesuai activeDir
     allParsedData = activeDir === 'dep' ? allParsedDeparture : allParsedArrival;
@@ -1027,8 +1072,9 @@ function addCheckedToBasket() {
 // ============================================================
 function buildTrainHTML(train) {
     let rows = '', urut = 1;
+    // Lokomotif: tidak diberi nomor urut
     const lok = (train.noLok && train.noLok !== '-') ? `<strong>${train.noLok}</strong>` : '<span style="color:#ccc;">—</span>';
-    rows += `<tr class="lok-row"><td>${urut++}</td><td>${lok}</td><td style="color:#aaa;">-</td><td style="color:#aaa;">-</td><td style="font-style:italic;color:#718096;">Lokomotif</td></tr>`;
+    rows += `<tr class="lok-row"><td style="color:#aaa;font-style:italic;">Lok</td><td>${lok}</td><td style="color:#aaa;">-</td><td style="color:#aaa;">-</td><td style="font-style:italic;color:#718096;"></td></tr>`;
     train.saranaList.forEach(s => {
         const dCls = s.status === 'D' ? 'class="status-d"' : '';
         rows += `<tr><td>${urut++}</td><td>${s.noSarana}</td><td ${dCls}>${s.status}</td><td>${s.berat}</td><td>${s.catatan}</td></tr>`;
