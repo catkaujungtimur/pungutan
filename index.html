@@ -208,42 +208,6 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 <body>
 <div class="container">
 
-<!-- CONFIG PANEL -->
-<div class="config-panel">
-    <h2>🚆 Sistem Cetak Ringkas Sarana</h2>
-    <div class="config-row" style="flex-direction:column;gap:8px;">
-        <div class="form-group">
-            <label>Google Spreadsheet ID</label>
-            <input type="text" id="spreadsheet-id-input" placeholder="Masukkan Spreadsheet ID..." style="width:100%;max-width:600px;" />
-        </div>
-        <div class="form-group">
-            <label>Nama Tab Sheet (sesuai di spreadsheet)</label>
-            <input type="text" id="month-select" placeholder="contoh: MEI 2026, APR 2026..." style="width:100%;max-width:600px;" oninput="localStorage.setItem('ss_sheet', this.value)" />
-        </div>
-        <div class="form-group">
-            <label>Tanggal Dinasan</label>
-            <input type="date" id="target-date-config" style="max-width:200px;" onchange="syncDate(this.value)" />
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <button class="btn btn-primary" onclick="saveConfigAndReload()">💾 Simpan & Muat Ulang</button>
-            <button class="btn btn-ghost" onclick="debugJSON()" style="font-size:10px;background:#e2e8f0;color:#a0aec0;border:1px dashed #cbd5e0;">🔬 Debug</button>
-        </div>
-    </div>
-</div>
-
-<!-- Dialog 3 Pilihan -->
-<div class="overlay-dialog" id="three-choice-dialog">
-    <div class="dialog-box">
-        <h4>⚠️ Shift sudah ada</h4>
-        <p id="dialog-msg">Dinas sudah ada di lembar cetak. Apa yang ingin kamu lakukan?</p>
-        <div class="dialog-btns">
-            <button class="btn btn-success" onclick="resolveDialog('tambah')">➕ Tambahkan ke yang sudah ada</button>
-            <button class="btn btn-primary" onclick="resolveDialog('ganti')">🔄 Ganti seluruhnya</button>
-            <button class="btn btn-ghost"   onclick="resolveDialog('batal')">✕ Batal</button>
-        </div>
-    </div>
-</div>
-
 <!-- Dialog 3 Pilihan -->
 <div class="overlay-dialog" id="three-choice-dialog">
     <div class="dialog-box">
@@ -257,36 +221,57 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
     </div>
 </div>
 
+<!-- CONFIG PANEL -->
+<div class="config-panel">
+    <h2>🚆 Sistem Cetak Ringkas Sarana</h2>
+    <div class="config-row" style="flex-direction:column;gap:8px;">
+        <div class="form-group">
+            <label>Google Spreadsheet ID</label>
+            <input type="text" id="spreadsheet-id-input" placeholder="Masukkan Spreadsheet ID..." style="width:100%;max-width:600px;" />
+        </div>
+        <div class="form-group">
+            <label>Nama Tab Sheet (sesuai di spreadsheet)</label>
+            <input type="text" id="month-select" placeholder="contoh: MEI 2026, APR 2026..." style="width:100%;max-width:600px;" oninput="localStorage.setItem('ss_sheet', this.value)" />
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="saveConfigAndReload()">💾 Simpan & Muat Ulang</button>
+            <button class="btn btn-ghost" onclick="debugJSON()" style="font-size:10px;background:#e2e8f0;color:#a0aec0;border:1px dashed #cbd5e0;">🔬 Debug</button>
+        </div>
+    </div>
+</div>
+
 <!-- WORKSPACE -->
 <div class="workspace">
 
     <!-- PANEL KIRI: Picker KA -->
     <div class="picker-panel">
-        <h3>📋 Pilih KA untuk Lembar Cetak</h3>
 
-        <!-- Shift Tabs -->
-        <div class="shift-tabs">
+        <!-- Tanggal di paling atas -->
+        <div class="date-row" style="margin-bottom:10px;">
+            <label>Tanggal:</label>
+            <input type="date" id="target-date" onchange="refreshKAList()" style="flex:1;" />
+        </div>
+
+        <!-- Judul -->
+        <h3 style="margin-bottom:8px;">📋 Pilih KA untuk Lembar Cetak</h3>
+
+        <!-- Shift Tabs — rata kiri -->
+        <div class="shift-tabs" style="justify-content:flex-start;">
             <div class="shift-tab active-malam" id="tab-malam" onclick="selectShiftTab('malam')">🌙 Malam</div>
             <div class="shift-tab" id="tab-siang" onclick="selectShiftTab('siang')">☀️ Siang</div>
             <div class="shift-tab" id="tab-pagi"  onclick="selectShiftTab('pagi')">🌅 Pagi</div>
         </div>
 
-        <!-- Hidden date input untuk addCheckedToBasket -->
-        <input type="date" id="target-date" style="display:none;" />
-
         <!-- Toggle Kedatangan / Keberangkatan -->
-        <div class="direction-toggle">
+        <div class="direction-toggle" style="margin-top:8px;">
             <div class="dir-btn arr active" id="dir-arr" onclick="selectDirection('arr')">🟢 KA Kedatangan</div>
             <div class="dir-btn dep" id="dir-dep" onclick="selectDirection('dep')">🟠 KA Keberangkatan</div>
         </div>
 
-        <!-- Tombol Refresh -->
-        <button class="btn btn-ghost" onclick="hardRefresh()" style="width:100%;margin-bottom:8px;font-size:12px;background:#edf2f7;">🔄 Refresh Tampilan</button>
+        <!-- Tombol Refresh (satu saja) -->
+        <button class="btn btn-ghost" onclick="hardRefresh()" style="width:100%;margin:8px 0;font-size:12px;background:#edf2f7;">🔄 Refresh Tampilan</button>
 
-        <!-- Tombol Refresh -->
-        <button class="btn btn-ghost" onclick="hardRefresh()" style="width:100%;margin-bottom:8px;font-size:12px;background:#edf2f7;">🔄 Refresh Tampilan</button>
-
-        <!-- Daftar KA (dari sheet, urut sesuai sheet) -->
+        <!-- Daftar KA -->
         <div class="ka-list-container" id="ka-list-container">
             <div class="ka-list-empty">Muat data terlebih dahulu.</div>
         </div>
@@ -325,7 +310,6 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
                     <div class="col-slot col-pagi"  id="col-pagi" ><div class="col-slot-empty" id="empty-pagi" >— Pagi —</div></div>
                 </div>
             </div>
-            <!-- Overflow pages (muncul otomatis jika konten melebihi 1 halaman) -->
             <div id="overflow-pages"></div>
         </div>
     </div>
@@ -368,20 +352,11 @@ function resolveDialog(choice) {
     if (_dialogResolve) { _dialogResolve(choice); _dialogResolve = null; }
 }
 
-// Sync tanggal: config date picker → picker date
-function syncDate(val) {
-    const picker = document.getElementById('target-date');
-    if (picker) { picker.value = val; refreshKAList(); }
-}
-
-// Refresh tampilan: reset UI ke state aktif saat ini tanpa reload halaman
+// Refresh tampilan: reset UI ke state aktif tanpa reload halaman
 function hardRefresh() {
-    // Pastikan arah dan shift sudah terset dengan benar
     allParsedData = activeDir === 'dep' ? allParsedDeparture : allParsedArrival;
-    // Re-apply direction button state
     document.getElementById('dir-arr').className = 'dir-btn arr' + (activeDir==='arr' ? ' active' : '');
     document.getElementById('dir-dep').className = 'dir-btn dep' + (activeDir==='dep' ? ' active' : '');
-    // Re-apply shift tab state
     ['malam','siang','pagi'].forEach(s => {
         const tab = document.getElementById('tab-'+s);
         tab.className = 'shift-tab';
@@ -414,7 +389,6 @@ document.getElementById('spreadsheet-id-input').value = currentSpreadsheetId;
 document.getElementById('month-select').value = currentSheetName;
 // Sync kedua date picker
 const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-document.getElementById('target-date-config').value = todayStr;
 document.getElementById('target-date').value = todayStr;
 // Untuk input text, juga set value
 if (document.getElementById('month-select').tagName === 'INPUT') {
