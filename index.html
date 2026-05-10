@@ -12,19 +12,19 @@ body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #2d3748;
 /* ===== TOP CONFIG PANEL ===== */
 .config-panel {
     background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
-    padding: 14px 18px; margin-bottom: 16px;
+    padding: 10px 14px; margin-bottom: 10px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
-.config-panel h2 { font-size: 15px; color: #1a365d; margin-bottom: 12px; }
+.config-panel h2 { font-size: 13px; color: #1a365d; margin-bottom: 8px; }
 .config-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
 .form-group { display: flex; flex-direction: column; gap: 4px; }
-label { font-size: 11px; font-weight: bold; color: #4a5568; }
+label { font-size: 10px; font-weight: bold; color: #4a5568; }
 input[type=text], input[type=date], select {
-    padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 5px;
-    font-size: 13px; color: #2d3748; background: #fff;
+    padding: 5px 8px; border: 1px solid #cbd5e0; border-radius: 5px;
+    font-size: 12px; color: #2d3748; background: #fff;
 }
 input[type=text] { min-width: 280px; }
-.btn { padding: 8px 14px; border: none; border-radius: 5px; font-size: 13px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+.btn { padding: 6px 12px; border: none; border-radius: 5px; font-size: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
 .btn-primary  { background: #2b6cb0; color: #fff; }
 .btn-success  { background: #276749; color: #fff; }
 .btn-danger   { background: #c53030; color: #fff; }
@@ -34,8 +34,8 @@ input[type=text] { min-width: 280px; }
 /* ===== MAIN WORKSPACE: 2 kolom ===== */
 .workspace {
     display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 16px;
+    grid-template-columns: 310px 1fr;
+    gap: 12px;
     align-items: start;
 }
 .left-panel {
@@ -46,15 +46,15 @@ input[type=text] { min-width: 280px; }
 /* ===== PANEL KIRI: Pilih KA ===== */
 .picker-panel {
     background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
-    padding: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    padding: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     position: sticky; top: 16px;
 }
 .picker-panel h3 { font-size: 13px; color: #1a365d; margin-bottom: 10px; }
 
 .shift-tabs { display: flex; gap: 4px; margin-bottom: 10px; flex-wrap: wrap; }
 .shift-tab {
-    flex: 1; padding: 6px 4px; border: 1.5px solid #e2e8f0; border-radius: 5px;
-    background: #f7fafc; font-size: 11px; font-weight: bold; cursor: pointer;
+    flex: 1; padding: 4px 3px; border: 1.5px solid #e2e8f0; border-radius: 5px;
+    background: #f7fafc; font-size: 10px; font-weight: bold; cursor: pointer;
     text-align: center; color: #4a5568;
 }
 .shift-tab.active-malam { background: #2b6cb0; color: #fff; border-color: #2b6cb0; }
@@ -67,7 +67,7 @@ input[type=text] { min-width: 280px; }
 
 .ka-list-container {
     border: 1px solid #e2e8f0; border-radius: 6px;
-    max-height: 420px; overflow-y: auto; margin-bottom: 10px;
+    max-height: calc(100vh - 480px); min-height: 120px; overflow-y: auto; margin-bottom: 8px;
 }
 .ka-list-empty { text-align: center; padding: 30px 10px; color: #a0aec0; font-size: 12px; font-style: italic; }
 
@@ -158,6 +158,15 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 .font-xs table { font-size: 7px !important; }
 .font-xs th, .font-xs td { padding: 1px 2px !important; }
 .font-xs .train-header-simple h4 { font-size: 8px !important; }
+.font-xs2 table { font-size: 6px !important; }
+.font-xs2 th, .font-xs2 td { padding: 1px 1px !important; }
+.font-xs2 .train-header-simple h4 { font-size: 7px !important; }
+.font-xs2 .train-header-simple { padding: 2px 4px !important; padding-right: 40px !important; }
+.font-xs3 table { font-size: 5px !important; }
+.font-xs3 th, .font-xs3 td { padding: 0px 1px !important; }
+.font-xs3 .train-header-simple h4 { font-size: 6px !important; }
+.font-xs3 .train-header-simple { padding: 1px 3px !important; padding-right: 35px !important; }
+.font-xs3 .train-block { margin-bottom: 2px !important; }
 .font-sm table { font-size: 8px !important; }
 .font-md table { font-size: 10px !important; }
 .font-md th, .font-md td { padding: 3px 4px !important; }
@@ -234,11 +243,11 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
         <!-- Config Card -->
         <div class="config-panel" style="margin-bottom:0;">
             <h2 style="font-size:14px;margin-bottom:10px;">🚆 Sistem Cetak Ringkas Sarana</h2>
-            <div class="form-group" style="margin-bottom:8px;">
+            <div class="form-group" style="margin-bottom:6px;">
                 <label>Google Spreadsheet ID</label>
                 <input type="text" id="spreadsheet-id-input" placeholder="Masukkan Spreadsheet ID..." style="width:100%;" />
             </div>
-            <div class="form-group" style="margin-bottom:10px;">
+            <div class="form-group" style="margin-bottom:8px;">
                 <label>Nama Tab Sheet</label>
                 <input type="text" id="month-select" placeholder="contoh: MEI 2026..." style="width:100%;" oninput="localStorage.setItem('ss_sheet', this.value)" />
             </div>
@@ -269,8 +278,8 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 
             <!-- Toggle Kedatangan / Keberangkatan -->
             <div class="direction-toggle" style="margin-top:8px;">
-                <div class="dir-btn arr active" id="dir-arr" onclick="selectDirection('arr')">🟢 KA Kedatangan</div>
                 <div class="dir-btn dep" id="dir-dep" onclick="selectDirection('dep')">🟠 KA Keberangkatan</div>
+                <div class="dir-btn arr active" id="dir-arr" onclick="selectDirection('arr')">🟢 KA Kedatangan</div>
             </div>
 
             <!-- Tombol Refresh — juga trigger Simpan & Muat Ulang -->
@@ -296,9 +305,11 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
             <span class="toolbar-label">Lembar Cetak A4:</span>
             <label style="font-size:12px;">Font:</label>
             <select id="font-size-select" onchange="changeFontSize(this.value)">
-                <option value="font-xs">Kecil (maks sarana)</option>
-                <option value="font-sm" selected>Sedang</option>
                 <option value="font-md">Besar</option>
+                <option value="font-sm" selected>Sedang</option>
+                <option value="font-xs">Kecil</option>
+                <option value="font-xs2">Lebih Kecil</option>
+                <option value="font-xs3">Terkecil</option>
             </select>
             <button class="btn btn-primary"  onclick="window.print()">🖨️ Cetak</button>
             <button class="btn btn-danger"   onclick="clearBasket()">🧹 Kosongkan</button>
@@ -1262,7 +1273,7 @@ function clearBasket() {
 }
 function changeFontSize(cls) {
     const el = document.getElementById('print-area-a4');
-    el.classList.remove('font-xs','font-sm','font-md');
+    el.classList.remove('font-xs','font-xs2','font-xs3','font-sm','font-md');
     el.classList.add(cls);
 }
 
