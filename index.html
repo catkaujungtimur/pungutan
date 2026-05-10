@@ -38,6 +38,10 @@ input[type=text] { min-width: 280px; }
     gap: 16px;
     align-items: start;
 }
+.left-panel {
+    display: flex; flex-direction: column; gap: 12px;
+    position: sticky; top: 16px;
+}
 
 /* ===== PANEL KIRI: Pilih KA ===== */
 .picker-panel {
@@ -221,66 +225,69 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
     </div>
 </div>
 
-<!-- CONFIG PANEL -->
-<div class="config-panel">
-    <h2>🚆 Sistem Cetak Ringkas Sarana</h2>
-    <div class="config-row" style="flex-direction:column;gap:8px;">
-        <div class="form-group">
-            <label>Google Spreadsheet ID</label>
-            <input type="text" id="spreadsheet-id-input" placeholder="Masukkan Spreadsheet ID..." style="width:100%;max-width:600px;" />
-        </div>
-        <div class="form-group">
-            <label>Nama Tab Sheet (sesuai di spreadsheet)</label>
-            <input type="text" id="month-select" placeholder="contoh: MEI 2026, APR 2026..." style="width:100%;max-width:600px;" oninput="localStorage.setItem('ss_sheet', this.value)" />
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <button class="btn btn-primary" onclick="saveConfigAndReload()">💾 Simpan & Muat Ulang</button>
-            <button class="btn btn-ghost" onclick="debugJSON()" style="font-size:10px;background:#e2e8f0;color:#a0aec0;border:1px dashed #cbd5e0;">🔬 Debug</button>
-        </div>
-    </div>
-</div>
-
 <!-- WORKSPACE -->
 <div class="workspace">
 
-    <!-- PANEL KIRI: Picker KA -->
-    <div class="picker-panel">
+    <!-- PANEL KIRI: Config + Picker -->
+    <div style="display:flex;flex-direction:column;gap:12px;position:sticky;top:16px;">
 
-        <!-- Tanggal di paling atas -->
-        <div class="date-row" style="margin-bottom:10px;">
-            <label>Tanggal:</label>
-            <input type="date" id="target-date" onchange="refreshKAList()" style="flex:1;" />
+        <!-- Config Card -->
+        <div class="config-panel" style="margin-bottom:0;">
+            <h2 style="font-size:14px;margin-bottom:10px;">🚆 Sistem Cetak Ringkas Sarana</h2>
+            <div class="form-group" style="margin-bottom:8px;">
+                <label>Google Spreadsheet ID</label>
+                <input type="text" id="spreadsheet-id-input" placeholder="Masukkan Spreadsheet ID..." style="width:100%;" />
+            </div>
+            <div class="form-group" style="margin-bottom:10px;">
+                <label>Nama Tab Sheet</label>
+                <input type="text" id="month-select" placeholder="contoh: MEI 2026..." style="width:100%;" oninput="localStorage.setItem('ss_sheet', this.value)" />
+            </div>
+            <div style="display:flex;gap:6px;">
+                <button class="btn btn-primary" id="btn-simpan" onclick="saveConfigAndReload()" style="flex:1;font-size:12px;">💾 Simpan & Muat Ulang</button>
+                <button class="btn btn-ghost" onclick="debugJSON()" style="font-size:10px;background:#e2e8f0;color:#a0aec0;border:1px dashed #cbd5e0;">🔬</button>
+            </div>
         </div>
 
-        <!-- Judul -->
-        <h3 style="margin-bottom:8px;">📋 Pilih KA untuk Lembar Cetak</h3>
+        <!-- Picker Card -->
+        <div class="picker-panel" style="position:static;">
 
-        <!-- Shift Tabs — rata kiri -->
-        <div class="shift-tabs" style="justify-content:flex-start;">
-            <div class="shift-tab active-malam" id="tab-malam" onclick="selectShiftTab('malam')">🌙 Malam</div>
-            <div class="shift-tab" id="tab-siang" onclick="selectShiftTab('siang')">☀️ Siang</div>
-            <div class="shift-tab" id="tab-pagi"  onclick="selectShiftTab('pagi')">🌅 Pagi</div>
+            <!-- Tanggal di paling atas -->
+            <div class="date-row" style="margin-bottom:10px;">
+                <label>Tanggal:</label>
+                <input type="date" id="target-date" onchange="refreshKAList()" style="flex:1;" />
+            </div>
+
+            <!-- Judul -->
+            <h3 style="margin-bottom:8px;">📋 Pilih KA untuk Lembar Cetak</h3>
+
+            <!-- Shift Tabs — rata kiri -->
+            <div class="shift-tabs" style="justify-content:flex-start;">
+                <div class="shift-tab active-malam" id="tab-malam" onclick="selectShiftTab('malam')">🌙 Malam</div>
+                <div class="shift-tab" id="tab-siang" onclick="selectShiftTab('siang')">☀️ Siang</div>
+                <div class="shift-tab" id="tab-pagi"  onclick="selectShiftTab('pagi')">🌅 Pagi</div>
+            </div>
+
+            <!-- Toggle Kedatangan / Keberangkatan -->
+            <div class="direction-toggle" style="margin-top:8px;">
+                <div class="dir-btn arr active" id="dir-arr" onclick="selectDirection('arr')">🟢 KA Kedatangan</div>
+                <div class="dir-btn dep" id="dir-dep" onclick="selectDirection('dep')">🟠 KA Keberangkatan</div>
+            </div>
+
+            <!-- Tombol Refresh — juga trigger Simpan & Muat Ulang -->
+            <button class="btn btn-ghost" onclick="saveConfigAndReload(); hardRefresh();" style="width:100%;margin:8px 0;font-size:12px;background:#edf2f7;">🔄 Refresh Tampilan</button>
+
+            <!-- Daftar KA -->
+            <div class="ka-list-container" id="ka-list-container">
+                <div class="ka-list-empty">Muat data terlebih dahulu.</div>
+            </div>
+
+            <!-- Aksi -->
+            <div class="picker-actions">
+                <button class="btn btn-success" onclick="addCheckedToBasket()">➕ Tambah ke Cetak</button>
+                <button class="btn btn-ghost"   onclick="clearChecks()">✕ Batal Centang</button>
+            </div>
         </div>
 
-        <!-- Toggle Kedatangan / Keberangkatan -->
-        <div class="direction-toggle" style="margin-top:8px;">
-            <div class="dir-btn arr active" id="dir-arr" onclick="selectDirection('arr')">🟢 KA Kedatangan</div>
-            <div class="dir-btn dep" id="dir-dep" onclick="selectDirection('dep')">🟠 KA Keberangkatan</div>
-        </div>
-
-        <!-- Tombol Refresh (satu saja) -->
-        <button class="btn btn-ghost" onclick="hardRefresh()" style="width:100%;margin:8px 0;font-size:12px;background:#edf2f7;">🔄 Refresh Tampilan</button>
-
-        <!-- Daftar KA -->
-        <div class="ka-list-container" id="ka-list-container">
-            <div class="ka-list-empty">Muat data terlebih dahulu.</div>
-        </div>
-
-        <!-- Aksi -->
-        <div class="picker-actions">
-            <button class="btn btn-success" onclick="addCheckedToBasket()">➕ Tambah ke Cetak</button>
-            <button class="btn btn-ghost"   onclick="clearChecks()">✕ Batal Centang</button>
-        </div>
     </div>
 
     <!-- PANEL KANAN: Preview A4 -->
@@ -341,6 +348,9 @@ function resolveDialog(choice) {
 
 // Refresh tampilan: reset UI ke state aktif tanpa reload halaman
 function hardRefresh() {
+    // Trigger simpan & muat ulang (reload data dari sheet)
+    saveConfigAndReload();
+    // Re-apply direction dan shift state
     allParsedData = activeDir === 'dep' ? allParsedDeparture : allParsedArrival;
     document.getElementById('dir-arr').className = 'dir-btn arr' + (activeDir==='arr' ? ' active' : '');
     document.getElementById('dir-dep').className = 'dir-btn dep' + (activeDir==='dep' ? ' active' : '');
@@ -349,7 +359,6 @@ function hardRefresh() {
         tab.className = 'shift-tab';
         if (s === activeShift) tab.classList.add('active-'+activeShift);
     });
-    refreshKAList();
 }
 
 // ============================================================
