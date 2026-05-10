@@ -337,20 +337,7 @@ function resolveDialog(choice) {
 
 // ============================================================
 // DIALOG 3 PILIHAN
-// ============================================================
-let _dialogResolve = null;
-function showThreeChoiceDialog(shiftName) {
-    return new Promise(resolve => {
-        _dialogResolve = resolve;
-        document.getElementById('dialog-msg').textContent =
-            `Dinas ${shiftName} sudah ada di lembar cetak. Apa yang ingin kamu lakukan?`;
-        document.getElementById('three-choice-dialog').classList.add('show');
-    });
-}
-function resolveDialog(choice) {
-    document.getElementById('three-choice-dialog').classList.remove('show');
-    if (_dialogResolve) { _dialogResolve(choice); _dialogResolve = null; }
-}
+
 
 // Refresh tampilan: reset UI ke state aktif tanpa reload halaman
 function hardRefresh() {
