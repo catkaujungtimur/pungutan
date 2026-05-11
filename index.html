@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cetak Ringkas Sarana KA</title>
+<title>Print Pungutan</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #2d3748; padding: 16px; }
@@ -140,15 +140,15 @@ input[type=text] { min-width: 280px; }
     padding: 3px 5px; display: flex; justify-content: space-between; align-items: center;
     padding-right: 50px;
 }
-.train-header-simple h4 { margin: 0; font-size: 9px; color: #2d3748; }
-.train-header-simple .train-date { font-size: 8px; color: #718096; font-weight: bold; }
+.train-header-simple h4 { margin: 0; font-size: 9px; color: #2d3748; font-weight: bold; }
+.train-header-simple .train-date { font-size: 9px; color: #718096; font-weight: bold; }
 .remove-train-btn {
     position: absolute; top: 2px; right: 3px; background: #e53e3e; color: #fff;
     border: none; padding: 1px 4px; border-radius: 2px; cursor: pointer; font-size: 8px; font-weight: bold;
 }
 table { width: 100%; border-collapse: collapse; }
 th { background: #edf2f7; font-size: 8px; padding: 2px 3px; text-align: left; border-bottom: 1px solid #cbd5e0; }
-td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertical-align: middle; }
+td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertical-align: middle; font-weight: bold; }
 .tonase-row td { font-weight: bold; background: #f7fafc; }
 .status-d { background: #fff5f5 !important; color: #c53030; }
 .text-red { color: #c53030; }
@@ -242,7 +242,7 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 
         <!-- Config Card -->
         <div class="config-panel" style="margin-bottom:0;">
-            <h2 style="font-size:14px;margin-bottom:10px;">🚆 Sistem Cetak Ringkas Sarana</h2>
+            <h2 style="font-size:14px;margin-bottom:10px;">🚆 Print Pungutan</h2>
             <div class="form-group" style="margin-bottom:6px;">
                 <label>Google Spreadsheet ID</label>
                 <input type="text" id="spreadsheet-id-input" placeholder="Masukkan Spreadsheet ID..." style="width:100%;" />
