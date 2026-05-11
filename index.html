@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Print Pungutan</title>
+<title>Cetak Ringkas Sarana KA</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #2d3748; padding: 16px; }
@@ -204,7 +204,7 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 @media print {
     @page { size: A4 portrait; margin: 8mm 6mm; }
     body { background: #fff; padding: 0; }
-    .config-panel, .picker-panel, .preview-toolbar, .remove-shift-btn, .remove-train-btn, .col-slot-empty { display: none !important; }
+    .config-panel, .picker-panel, .preview-toolbar, .remove-shift-btn, .remove-train-btn, .col-slot-empty, #overflow-indicator { display: none !important; }
     .workspace { display: block; }
     .a4-page { box-shadow: none; border: none; padding: 0; width: 100%; min-height: auto; }
     .three-col-grid { min-height: auto; gap: 3mm; }
@@ -242,7 +242,7 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 
         <!-- Config Card -->
         <div class="config-panel" style="margin-bottom:0;">
-            <h2 style="font-size:14px;margin-bottom:10px;">🚆 Print Pungutan</h2>
+            <h2 style="font-size:14px;margin-bottom:10px;">🚆 Sistem Cetak Ringkas Sarana</h2>
             <div class="form-group" style="margin-bottom:6px;">
                 <label>Google Spreadsheet ID</label>
                 <input type="text" id="spreadsheet-id-input" placeholder="Masukkan Spreadsheet ID..." style="width:100%;" />
@@ -315,6 +315,9 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
             <button class="btn btn-danger"   onclick="clearBasket()">🧹 Kosongkan</button>
         </div>
 
+        <!-- Indikator overflow — hanya tampil di layar, tidak ikut print -->
+        <div id="overflow-indicator" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:8px 12px;font-size:12px;color:#856404;margin-bottom:8px;"></div>
+
         <div id="print-area-wrapper">
             <div id="print-area-a4" class="a4-page font-sm">
                 <div id="basket-empty-state" class="a4-empty">
@@ -328,7 +331,7 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
                     <div class="col-slot col-pagi"  id="col-pagi" ><div class="col-slot-empty" id="empty-pagi" >— Pagi —</div></div>
                 </div>
             </div>
-            <div id="overflow-pages"></div>
+
         </div>
     </div>
 
@@ -1225,37 +1228,23 @@ function renderBasket() {
 
 function checkOverflow() {
     const A4_HEIGHT_PX = 1122; // 297mm pada 96dpi
-    const wrapper = document.getElementById('overflow-pages');
-    if (!wrapper) return;
-    wrapper.innerHTML = '';
+    const indicator = document.getElementById('overflow-indicator');
+    if (!indicator) return;
 
-    const cols = {
-        malam: document.getElementById('col-malam'),
-        siang: document.getElementById('col-siang'),
-        pagi:  document.getElementById('col-pagi')
-    };
-
-    // Cek tinggi kolom tertinggi
-    const heights = Object.values(cols).map(c => c ? c.scrollHeight : 0);
-    const maxH = Math.max(...heights);
+    const colMalam = document.getElementById('col-malam');
+    const colSiang = document.getElementById('col-siang');
+    const colPagi  = document.getElementById('col-pagi');
+    const heights  = [colMalam, colSiang, colPagi].map(c => c ? c.scrollHeight : 0);
+    const maxH     = Math.max(...heights);
 
     if (maxH > A4_HEIGHT_PX) {
-        // Hitung jumlah halaman yang dibutuhkan
         const pages = Math.ceil(maxH / A4_HEIGHT_PX);
-        let warningHTML = '';
-        for (let p = 2; p <= pages; p++) {
-            warningHTML += `
-                <div style="margin-top:10px;">
-                    <div class="a4-page-label">⚠️ Halaman ${p} — Konten melebihi 1 lembar kertas</div>
-                    <div class="a4-page font-sm" style="border:2px dashed #e53e3e;opacity:0.6;min-height:${A4_HEIGHT_PX * 0.3}px;display:flex;align-items:center;justify-content:center;">
-                        <p style="color:#e53e3e;font-size:12px;text-align:center;">
-                            ⚠️ Konten terlalu panjang<br>
-                            <small>Kurangi KA atau perkecil ukuran font</small>
-                        </p>
-                    </div>
-                </div>`;
-        }
-        wrapper.innerHTML = warningHTML;
+        indicator.innerHTML = `⚠️ Konten melebihi 1 halaman (~${pages} lembar). Perkecil font atau kurangi KA.`;
+        indicator.style.display = 'block';
+    } else {
+        indicator.innerHTML = '✅ Konten muat dalam 1 halaman.';
+        indicator.style.display = 'block';
+        setTimeout(() => { indicator.style.display = 'none'; }, 3000);
     }
 }
 
