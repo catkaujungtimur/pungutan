@@ -375,9 +375,10 @@ const BULAN_LIST = ["JAN 2026","FEB 2026","MAR 2026","APR 2026","MEI 2026","JUNI
 
 let currentSpreadsheetId = localStorage.getItem('ss_id') || DEFAULT_ID;
 let currentSheetName     = localStorage.getItem('ss_sheet') || autoSheet();
-let allParsedData        = []; // KA kedatangan (default)
+let allParsedData        = []; // data aktif (sesuai activeDir)
 let allParsedArrival     = []; // KA kedatangan (kolom P/Q/R)
 let allParsedDeparture   = []; // KA keberangkatan (kolom A/B/C)
+let activeDir            = 'dep'; // 'dep' = keberangkatan (default), 'arr' = kedatangan
 let printBasket          = []; // [{id, shiftType, label, trains:[...]}]
 let activeShift          = 'malam'; // tab yang aktif
 
