@@ -183,6 +183,137 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 .dir-btn.active.arr { background:#276749; border-color:#276749; }
 .dir-btn.active.dep { background:#744210; border-color:#744210; }
 
+/* ===== MODE FLEKSIBEL ===== */
+.flex-toolbar {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 8px 12px; margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.flex-toolbar label { font-size: 11px; color: #4a5568; white-space: nowrap; }
+.flex-toolbar select, .flex-toolbar input[type=range] { font-size: 12px; }
+.mode-tabs {
+    display: flex; gap: 6px; margin-bottom: 10px;
+}
+.mode-tab {
+    flex: 1; padding: 6px 10px; border: 1.5px solid #e2e8f0;
+    border-radius: 6px; background: #f7fafc; font-size: 11px;
+    font-weight: bold; cursor: pointer; text-align: center; color: #4a5568;
+}
+.mode-tab.active { background: #2b6cb0; color: #fff; border-color: #2b6cb0; }
+
+/* Layout fleksibel: konten mengalir bebas dalam kolom koran */
+.flex-page {
+    background: white; width: 210mm;
+    box-sizing: border-box; padding: 8mm 6mm;
+    margin: 0 auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    border: 1px solid #cbd5e0; border-radius: 4px;
+    column-gap: 5mm;
+}
+.flex-page .flex-content {
+    /* CSS columns: konten mengalir otomatis ke kolom berikutnya */
+    column-count: 3;
+    column-gap: 5mm;
+    column-fill: auto; /* isi kolom kiri dulu, baru geser ke kanan */
+}
+.flex-shift-label {
+    font-size: 8px; font-weight: bold; background: #2b6cb0; color: #fff;
+    padding: 3px 6px; border-radius: 3px; margin-bottom: 3px;
+    text-transform: uppercase; break-after: avoid; /* jangan pisah dari konten di bawahnya */
+    -webkit-column-break-after: avoid;
+    column-break-after: avoid;
+}
+.flex-train-block {
+    border: 0.5pt solid #cbd5e0; border-radius: 3px;
+    margin-bottom: 4px; overflow: hidden;
+    break-inside: avoid; /* PENTING: 1 KA tidak boleh terpotong */
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+}
+.flex-train-header {
+    background: #f7fafc; border-bottom: 1px solid #e2e8f0;
+    padding: 2px 5px; display: flex; justify-content: space-between;
+    font-weight: bold;
+}
+.flex-train-header span { font-size: inherit; }
+.flex-page table { width: 100%; border-collapse: collapse; }
+.flex-page th { background: #edf2f7; text-align: left; border-bottom: 1px solid #cbd5e0; }
+.flex-page td { border-bottom: 0.3pt dotted #e2e8f0; vertical-align: middle; }
+.flex-page .lok-row { background: #f0f7ff; }
+.flex-page .tonase-row td { font-weight: bold; background: #f7fafc; }
+.flex-page .status-d { background: #fff5f5 !important; color: #c53030; }
+.flex-page .text-red { color: #c53030; }
+
+@media print {
+    .flex-page { box-shadow: none; border: none; padding: 0; width: 100%; }
+    .flex-shift-label { background: #2b6cb0 !important; color: #fff !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .flex-train-block { border: 0.5pt solid #999; }
+    .flex-page .lok-row { background: #e8f0ff !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .flex-page .tonase-row td { background: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .flex-page .status-d { background: #fdd !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* ===== MODE FLEKSIBEL ===== */
+.flex-toolbar {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 8px 12px; margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.flex-toolbar label { font-size: 11px; color: #4a5568; white-space: nowrap; }
+.mode-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.mode-tab {
+    flex: 1; padding: 6px 10px; border: 1.5px solid #e2e8f0;
+    border-radius: 6px; background: #f7fafc; font-size: 11px;
+    font-weight: bold; cursor: pointer; text-align: center; color: #4a5568;
+}
+.mode-tab.active { background: #2b6cb0; color: #fff; border-color: #2b6cb0; }
+.flex-page {
+    background: white; width: 210mm; box-sizing: border-box; padding: 6mm 5mm;
+    margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    border: 1px solid #cbd5e0; border-radius: 4px;
+}
+.flex-content { column-gap: 5mm; column-fill: auto; }
+.flex-shift-label {
+    font-weight: bold; background: #2b6cb0; color: #fff;
+    padding: 3px 6px; border-radius: 3px; margin-bottom: 3px;
+    text-transform: uppercase;
+    break-after: avoid; -webkit-column-break-after: avoid;
+}
+.flex-train-block {
+    border: 0.5pt solid #cbd5e0; border-radius: 3px; margin-bottom: 4px;
+    overflow: hidden;
+    break-inside: avoid; -webkit-column-break-inside: avoid; page-break-inside: avoid;
+}
+.flex-train-header {
+    background: #f7fafc; border-bottom: 1px solid #e2e8f0;
+    padding: 2px 5px; display: flex; justify-content: space-between; font-weight: bold;
+}
+.flex-page table { width: 100%; border-collapse: collapse; }
+.flex-page th { background: #edf2f7; text-align: left; border-bottom: 1px solid #cbd5e0; }
+.flex-page td { border-bottom: 0.3pt dotted #e2e8f0; vertical-align: middle; font-weight: bold; }
+.flex-page .lok-row { background: #f0f7ff; }
+.flex-page .tonase-row td { background: #f7fafc; }
+.flex-page .status-d { background: #fff5f5 !important; color: #c53030; }
+.flex-page .text-red { color: #c53030; }
+@media print {
+    #toolbar-fix, #toolbar-flex, .mode-tabs { display: none !important; }
+    .flex-page { box-shadow: none; border: none; padding: 0; width: 100%; }
+    .flex-shift-label { background: #2b6cb0 !important; color: #fff !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .flex-page .lok-row { background: #e8f0ff !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .flex-page .tonase-row td { background: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .flex-page .status-d { background: #fdd !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
 /* Empty state */
 .a4-empty { text-align: center; padding: 80px 0; color: #a0aec0; }
 .a4-empty .icon { font-size: 30px; margin-bottom: 8px; }
@@ -302,16 +433,47 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 
     <!-- PANEL KANAN: Preview A4 -->
     <div class="preview-panel">
-        <div class="preview-toolbar">
-            <span class="toolbar-label">Lembar Cetak A4:</span>
-            <button class="btn btn-primary"  onclick="window.print()">🖨️ Cetak</button>
-            <button class="btn btn-danger"   onclick="clearBasket()">🧹 Kosongkan</button>
+
+        <!-- Tab pilih mode -->
+        <div class="mode-tabs">
+            <div class="mode-tab active" id="mode-tab-fix" onclick="switchMode('fix')">📌 Mode Default (3 Kolom)</div>
+            <div class="mode-tab" id="mode-tab-flex" onclick="switchMode('flex')">🔠 Mode Fleksibel</div>
         </div>
 
-        <!-- Indikator overflow — hanya tampil di layar, tidak ikut print -->
+        <!-- Toolbar Mode Default -->
+        <div id="toolbar-fix" class="preview-toolbar">
+            <span class="toolbar-label">Lembar Cetak A4:</span>
+            <button class="btn btn-primary" onclick="window.print()">🖨️ Cetak</button>
+            <button class="btn btn-danger"  onclick="clearBasket()">🧹 Kosongkan</button>
+        </div>
+
+        <!-- Toolbar Mode Fleksibel -->
+        <div id="toolbar-flex" class="flex-toolbar" style="display:none;">
+            <label>Ukuran Font:</label>
+            <select id="flex-font-size" onchange="applyFlexFont(this.value)">
+                <option value="7">7px (default)</option>
+                <option value="8">8px</option>
+                <option value="9">9px</option>
+                <option value="10">10px</option>
+                <option value="11">11px</option>
+                <option value="12">12px</option>
+                <option value="14">14px</option>
+            </select>
+            <label>Kolom:</label>
+            <select id="flex-cols" onchange="applyFlexCols(this.value)">
+                <option value="3" selected>3 Kolom</option>
+                <option value="2">2 Kolom</option>
+                <option value="1">1 Kolom</option>
+            </select>
+            <button class="btn btn-primary" onclick="window.print()">🖨️ Cetak</button>
+            <button class="btn btn-danger"  onclick="clearBasket()">🧹 Kosongkan</button>
+        </div>
+
+        <!-- Indikator overflow -->
         <div id="overflow-indicator" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:8px 12px;font-size:12px;color:#856404;margin-bottom:8px;"></div>
 
         <div id="print-area-wrapper">
+            <!-- MODE DEFAULT: 3 kolom kaku -->
             <div id="print-area-a4" class="a4-page font-xs3">
                 <div id="basket-empty-state" class="a4-empty">
                     <div class="icon">📄</div>
@@ -325,6 +487,16 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
                 </div>
             </div>
 
+            <!-- MODE FLEKSIBEL: mengalir bebas -->
+            <div id="print-area-flex" class="flex-page" style="display:none;">
+                <div id="basket-empty-flex" class="a4-empty">
+                    <div class="icon">📄</div>
+                    <p>Centang KA di panel kiri lalu klik <strong>Tambah ke Cetak</strong>.</p>
+                </div>
+                <div class="flex-content" id="flex-content" style="display:none;"></div>
+            </div>
+
+            <div id="overflow-pages"></div>
         </div>
     </div>
 
@@ -332,6 +504,156 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 </div><!-- /container -->
 
 <script>
+// ============================================================
+// MODE MANAGER (Default / Fleksibel)
+// ============================================================
+function switchMode(mode) {
+    activeMode = mode;
+    // Tab UI
+    document.getElementById('mode-tab-fix').className  = 'mode-tab' + (mode==='fix'  ? ' active' : '');
+    document.getElementById('mode-tab-flex').className = 'mode-tab' + (mode==='flex' ? ' active' : '');
+    // Toolbar
+    document.getElementById('toolbar-fix').style.display  = mode==='fix'  ? 'flex' : 'none';
+    document.getElementById('toolbar-flex').style.display = mode==='flex' ? 'flex' : 'none';
+    // Area cetak
+    document.getElementById('print-area-a4').style.display   = mode==='fix'  ? 'block' : 'none';
+    document.getElementById('print-area-flex').style.display = mode==='flex' ? 'block' : 'none';
+    document.getElementById('overflow-pages').style.display  = mode==='fix'  ? 'block' : 'none';
+    if (mode === 'flex') renderFlexBasket();
+}
+
+function applyFlexFont(val) {
+    flexFontSize = parseInt(val);
+    renderFlexBasket();
+}
+
+function applyFlexCols(val) {
+    flexCols = parseInt(val);
+    renderFlexBasket();
+}
+
+function renderFlexBasket() {
+    const emptyEl   = document.getElementById('basket-empty-flex');
+    const contentEl = document.getElementById('flex-content');
+    if (printBasket.length === 0) {
+        emptyEl.style.display   = 'block';
+        contentEl.style.display = 'none';
+        return;
+    }
+    emptyEl.style.display   = 'none';
+    contentEl.style.display = 'block';
+
+    // Terapkan column-count dan font-size
+    contentEl.style.columnCount = flexCols;
+    contentEl.style.fontSize    = flexFontSize + 'px';
+    contentEl.style.lineHeight  = '1.3';
+
+    let html = '';
+    const shiftNames = { malam:'Dinas Malam', siang:'Dinas Siang', pagi:'Dinas Pagi' };
+
+    printBasket.forEach(shift => {
+        html += `<div class="flex-shift-label" style="font-size:${Math.max(flexFontSize, 7)}px;">${shift.label}</div>`;
+        shift.trains.forEach(train => {
+            let rows = '';
+            const lok = (train.noLok && train.noLok !== '-') ? `<strong>${train.noLok}</strong>` : '<span style="color:#aaa;">—</span>';
+            rows += `<tr class="lok-row"><td style="color:#888;font-style:italic;">Lok</td><td>${lok}</td><td style="color:#aaa;">-</td><td style="color:#aaa;">-</td><td></td></tr>`;
+            let urut = 1;
+            train.saranaList.forEach(s => {
+                const dCls = s.status === 'D' ? 'class="status-d"' : '';
+                const sarStyle = s.sarBgColor ? `style="background:${s.sarBgColor}!important;"` : '';
+                rows += `<tr><td>${urut++}</td><td ${sarStyle}>${s.noSarana}</td><td ${dCls}>${s.status}</td><td>${s.berat}</td><td>${s.catatan||''}</td></tr>`;
+            });
+            const thSize = `style="font-size:${flexFontSize}px;padding:1px 3px;"`;
+            const tdSize = `style="font-size:${flexFontSize}px;padding:0 3px;"`;
+            html += `<div class="flex-train-block">
+                <div class="flex-train-header" style="font-size:${flexFontSize+1}px;">
+                    <span>KA ${train.noKA} (${train.stn})</span>
+                    <span style="color:#718096;">${train.tanggal}</span>
+                </div>
+                <table>
+                    <thead><tr>
+                        <th ${thSize}>#</th><th ${thSize}>Sarana</th>
+                        <th ${thSize}>TM</th><th ${thSize}>Ton</th><th ${thSize}>Ket.</th>
+                    </tr></thead>
+                    <tbody>
+                        ${rows.replace(/<td/g, `<td ${tdSize.replace('style=','style=')}`).replace(/style="font-size:\d+px;padding:0 3px;"style=/g, 'style=')}
+                        <tr class="tonase-row">
+                            <td ${tdSize} colspan="3" style="text-align:right;font-size:${flexFontSize}px;padding:0 3px;">TOTAL</td>
+                            <td ${tdSize} class="text-red" style="font-size:${flexFontSize}px;padding:0 3px;">${train.totalTonase}</td>
+                            <td ${tdSize}></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>`;
+        });
+    });
+    contentEl.innerHTML = html;
+}
+
+// ============================================================
+// MODE MANAGER (Default / Fleksibel)
+// ============================================================
+let activeMode   = 'fix';
+let flexFontSize = 7;
+let flexCols     = 3;
+
+function switchMode(mode) {
+    activeMode = mode;
+    document.getElementById('mode-tab-fix').className  = 'mode-tab' + (mode==='fix'  ? ' active' : '');
+    document.getElementById('mode-tab-flex').className = 'mode-tab' + (mode==='flex' ? ' active' : '');
+    document.getElementById('toolbar-fix').style.display  = mode==='fix'  ? 'flex' : 'none';
+    document.getElementById('toolbar-flex').style.display = mode==='flex' ? 'flex' : 'none';
+    document.getElementById('print-area-a4').style.display   = mode==='fix'  ? 'block' : 'none';
+    document.getElementById('print-area-flex').style.display = mode==='flex' ? 'block' : 'none';
+    document.getElementById('overflow-pages').style.display  = mode==='fix'  ? 'block' : 'none';
+    if (mode === 'flex') renderFlexBasket();
+}
+
+function applyFlexFont(val) { flexFontSize = parseInt(val); renderFlexBasket(); }
+function applyFlexCols(val) { flexCols = parseInt(val); renderFlexBasket(); }
+
+function renderFlexBasket() {
+    const emptyEl   = document.getElementById('basket-empty-flex');
+    const contentEl = document.getElementById('flex-content');
+    if (!emptyEl || !contentEl) return;
+    if (printBasket.length === 0) {
+        emptyEl.style.display = 'block'; contentEl.style.display = 'none'; return;
+    }
+    emptyEl.style.display = 'none'; contentEl.style.display = 'block';
+    contentEl.style.columnCount = flexCols;
+    contentEl.style.fontSize    = flexFontSize + 'px';
+    contentEl.style.lineHeight  = '1.3';
+
+    let html = '';
+    printBasket.forEach(shift => {
+        html += `<div class="flex-shift-label" style="font-size:${Math.max(flexFontSize,7)}px;">${shift.label}</div>`;
+        shift.trains.forEach(train => {
+            let rows = '';
+            const lok = (train.noLok && train.noLok !== '-') ? `<strong>${train.noLok}</strong>` : '<span style="color:#aaa;">—</span>';
+            const fs  = `font-size:${flexFontSize}px;padding:1px 2px;`;
+            rows += `<tr class="lok-row"><td style="${fs}color:#888;font-style:italic;">Lok</td><td style="${fs}">${lok}</td><td style="${fs}color:#aaa;">-</td><td style="${fs}color:#aaa;">-</td><td style="${fs}"></td></tr>`;
+            let urut = 1;
+            train.saranaList.forEach(s => {
+                const dCls = s.status === 'D' ? 'style="background:#fff5f5;color:#c53030;"' : '';
+                const sarSt = s.sarBgColor ? `style="background:${s.sarBgColor}!important;"` : '';
+                rows += `<tr><td style="${fs}">${urut++}</td><td ${sarSt} style="${fs}">${s.noSarana}</td><td ${dCls} style="${fs}">${s.status}</td><td style="${fs}">${s.berat}</td><td style="${fs}">${s.catatan||''}</td></tr>`;
+            });
+            rows += `<tr class="tonase-row"><td style="${fs}" colspan="3" class="text-right">TOTAL</td><td style="${fs}" class="text-red">${train.totalTonase}</td><td style="${fs}"></td></tr>`;
+            html += `<div class="flex-train-block">
+                <div class="flex-train-header" style="font-size:${flexFontSize+1}px;">
+                    <span>KA ${train.noKA} (${train.stn})</span>
+                    <span style="color:#718096;">${train.tanggal}</span>
+                </div>
+                <table><thead><tr>
+                    <th style="${fs}">#</th><th style="${fs}">Sarana</th>
+                    <th style="${fs}">TM</th><th style="${fs}">Ton</th><th style="${fs}">Ket.</th>
+                </tr></thead><tbody>${rows}</tbody></table>
+            </div>`;
+        });
+    });
+    contentEl.innerHTML = html;
+}
+
 // ============================================================
 // DIALOG 3 PILIHAN
 // ============================================================
@@ -348,10 +670,6 @@ function resolveDialog(choice) {
     document.getElementById('three-choice-dialog').classList.remove('show');
     if (_dialogResolve) { _dialogResolve(choice); _dialogResolve = null; }
 }
-
-// ============================================================
-// DIALOG 3 PILIHAN
-
 
 // Refresh tampilan: reset UI ke state aktif tanpa reload halaman
 function hardRefresh() {
@@ -1216,8 +1534,10 @@ function renderBasket() {
         </div>`;
     });
 
-    // Deteksi overflow: cek apakah konten melebihi tinggi A4 (297mm ≈ 1122px pada 96dpi)
+    // Deteksi overflow mode default
     setTimeout(() => checkOverflow(), 100);
+    // Update mode fleksibel jika sedang aktif
+    if (activeMode === 'flex') setTimeout(() => renderFlexBasket(), 120);
 }
 
 function checkOverflow() {
@@ -1252,7 +1572,11 @@ function removeTrain(uid) {
     renderBasket();
 }
 function clearBasket() {
-    if (confirm('Kosongkan seluruh lembar cetak?')) { printBasket = []; renderBasket(); }
+    if (confirm('Kosongkan seluruh lembar cetak?')) {
+        printBasket = [];
+        renderBasket();
+        renderFlexBasket();
+    }
 }
 function changeFontSize(cls) {
     const el = document.getElementById('print-area-a4');
