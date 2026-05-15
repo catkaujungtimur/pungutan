@@ -644,13 +644,12 @@ function renderFlexBasket() {
     const fs = `font-size:${flexFontSize}px;padding:1px 2px;line-height:1.25;`;
 
     printBasket.forEach(shift => {
-        // Header shift + tombol hapus shift
-        html += `<div style="break-inside:avoid;-webkit-column-break-inside:avoid;">
-            <div class="flex-shift-label" style="font-size:${Math.max(flexFontSize,7)}px;display:flex;justify-content:space-between;align-items:center;">
-                <span>${shift.label}</span>
-                <button class="remove-shift-flex" onclick="removeShift(${shift.id});renderFlexBasket();"
-                    style="background:#fed7d7;color:#c53030;border:none;padding:1px 5px;border-radius:3px;cursor:pointer;font-size:8px;font-weight:bold;">✕ Hapus</button>
-            </div>`;
+        // Header shift — ikut mengalir dalam mode koran, tidak dipaksa ke atas
+        html += `<div class="flex-shift-label" style="font-size:${Math.max(flexFontSize,7)}px;display:flex;justify-content:space-between;align-items:center;break-after:avoid;-webkit-column-break-after:avoid;">
+            <span>${shift.label}</span>
+            <button class="remove-shift-flex" onclick="removeShift(${shift.id});renderFlexBasket();"
+                style="background:#fed7d7;color:#c53030;border:none;padding:1px 5px;border-radius:3px;cursor:pointer;font-size:8px;font-weight:bold;">✕ Hapus</button>
+        </div>`;
 
         shift.trains.forEach(train => {
             let rows = '';
@@ -690,7 +689,6 @@ function renderFlexBasket() {
                 </table>
             </div>`;
         });
-        html += `</div>`; // tutup shift wrapper
     });
     contentEl.innerHTML = html;
 }
