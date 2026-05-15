@@ -274,11 +274,17 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 }
 .mode-tab.active { background: #2b6cb0; color: #fff; border-color: #2b6cb0; }
 .flex-page {
-    background: white; width: 210mm; box-sizing: border-box; padding: 6mm 5mm;
+    background: white; width: 210mm; min-height: 297mm; box-sizing: border-box; padding: 6mm 5mm;
     margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     border: 1px solid #cbd5e0; border-radius: 4px;
+    position: relative;
 }
-.flex-content { column-gap: 5mm; column-fill: auto; }
+.flex-content {
+    column-count: 3; /* default, dioverride JS */
+    column-gap: 5mm;
+    column-fill: auto;
+    height: 277mm; /* tinggi konten dalam 1 halaman A4 */
+}
 .flex-shift-label {
     font-weight: bold; background: #2b6cb0; color: #fff;
     padding: 3px 6px; border-radius: 3px; margin-bottom: 3px;
@@ -302,8 +308,10 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 .flex-page .status-d { background: #fff5f5 !important; color: #c53030; }
 .flex-page .text-red { color: #c53030; }
 @media print {
-    #toolbar-fix, #toolbar-flex, .mode-tabs { display: none !important; }
-    .flex-page { box-shadow: none; border: none; padding: 0; width: 100%; }
+    #toolbar-fix, #toolbar-flex, .mode-tabs, #overflow-pages,
+    .remove-shift-flex, .remove-train-flex { display: none !important; }
+    .flex-page { box-shadow: none; border: none; padding: 0; margin: 0; width: 100%; min-height: auto; }
+    .flex-content { height: auto; } /* biarkan mengalir natural saat print */
     .flex-shift-label { background: #2b6cb0 !important; color: #fff !important;
         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .flex-page .lok-row { background: #e8f0ff !important;
@@ -620,36 +628,64 @@ function renderFlexBasket() {
         emptyEl.style.display = 'block'; contentEl.style.display = 'none'; return;
     }
     emptyEl.style.display = 'none'; contentEl.style.display = 'block';
+
+    // Terapkan kolom dan font
     contentEl.style.columnCount = flexCols;
+    contentEl.style.height      = (flexCols > 1) ? '277mm' : 'auto';
     contentEl.style.fontSize    = flexFontSize + 'px';
-    contentEl.style.lineHeight  = '1.3';
+    contentEl.style.lineHeight  = '1.25';
 
     let html = '';
+    const fs = `font-size:${flexFontSize}px;padding:1px 2px;line-height:1.25;`;
+
     printBasket.forEach(shift => {
-        html += `<div class="flex-shift-label" style="font-size:${Math.max(flexFontSize,7)}px;">${shift.label}</div>`;
+        // Header shift + tombol hapus shift
+        html += `<div style="break-inside:avoid;-webkit-column-break-inside:avoid;">
+            <div class="flex-shift-label" style="font-size:${Math.max(flexFontSize,7)}px;display:flex;justify-content:space-between;align-items:center;">
+                <span>${shift.label}</span>
+                <button class="remove-shift-flex" onclick="removeShift(${shift.id});renderFlexBasket();"
+                    style="background:#fed7d7;color:#c53030;border:none;padding:1px 5px;border-radius:3px;cursor:pointer;font-size:8px;font-weight:bold;">✕ Hapus</button>
+            </div>`;
+
         shift.trains.forEach(train => {
             let rows = '';
             const lok = (train.noLok && train.noLok !== '-') ? `<strong>${train.noLok}</strong>` : '<span style="color:#aaa;">—</span>';
-            const fs  = `font-size:${flexFontSize}px;padding:1px 2px;`;
             rows += `<tr class="lok-row"><td style="${fs}color:#888;font-style:italic;">Lok</td><td style="${fs}">${lok}</td><td style="${fs}color:#aaa;">-</td><td style="${fs}color:#aaa;">-</td><td style="${fs}"></td></tr>`;
             let urut = 1;
             train.saranaList.forEach(s => {
-                const dCls = s.status === 'D' ? 'style="background:#fff5f5;color:#c53030;"' : '';
-                const sarSt = s.sarBgColor ? `style="background:${s.sarBgColor}!important;"` : '';
-                rows += `<tr><td style="${fs}">${urut++}</td><td ${sarSt} style="${fs}">${s.noSarana}</td><td ${dCls} style="${fs}">${s.status}</td><td style="${fs}">${s.berat}</td><td style="${fs}">${s.catatan||''}</td></tr>`;
+                const dStyle = s.status === 'D' ? 'background:#fff5f5;color:#c53030;' : '';
+                const sarSt  = s.sarBgColor ? `background:${s.sarBgColor}!important;` : '';
+                rows += `<tr>
+                    <td style="${fs}">${urut++}</td>
+                    <td style="${fs}${sarSt}">${s.noSarana}</td>
+                    <td style="${fs}${dStyle}">${s.status}</td>
+                    <td style="${fs}">${s.berat}</td>
+                    <td style="${fs}">${s.catatan||''}</td>
+                </tr>`;
             });
-            rows += `<tr class="tonase-row"><td style="${fs}" colspan="3" class="text-right">TOTAL</td><td style="${fs}" class="text-red">${train.totalTonase}</td><td style="${fs}"></td></tr>`;
-            html += `<div class="flex-train-block">
-                <div class="flex-train-header" style="font-size:${flexFontSize+1}px;">
+            rows += `<tr class="tonase-row">
+                <td style="${fs}" colspan="3" align="right">TOTAL</td>
+                <td style="${fs}" class="text-red">${train.totalTonase}</td>
+                <td style="${fs}"></td>
+            </tr>`;
+
+            html += `<div class="flex-train-block" style="position:relative;">
+                <button class="remove-train-flex" onclick="removeTrain('${train.uniqueTrainId}');renderFlexBasket();"
+                    style="position:absolute;top:2px;right:3px;background:#e53e3e;color:#fff;border:none;padding:1px 4px;border-radius:2px;cursor:pointer;font-size:8px;font-weight:bold;z-index:2;">✕</button>
+                <div class="flex-train-header" style="font-size:${flexFontSize+1}px;padding-right:28px;">
                     <span>KA ${train.noKA} (${train.stn})</span>
                     <span style="color:#718096;">${train.tanggal}</span>
                 </div>
-                <table><thead><tr>
-                    <th style="${fs}">#</th><th style="${fs}">Sarana</th>
-                    <th style="${fs}">TM</th><th style="${fs}">Ton</th><th style="${fs}">Ket.</th>
-                </tr></thead><tbody>${rows}</tbody></table>
+                <table>
+                    <thead><tr>
+                        <th style="${fs}">#</th><th style="${fs}">Sarana</th>
+                        <th style="${fs}">TM</th><th style="${fs}">Ton</th><th style="${fs}">Ket.</th>
+                    </tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
             </div>`;
         });
+        html += `</div>`; // tutup shift wrapper
     });
     contentEl.innerHTML = html;
 }
