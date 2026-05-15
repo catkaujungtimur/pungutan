@@ -274,7 +274,7 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 }
 .mode-tab.active { background: #2b6cb0; color: #fff; border-color: #2b6cb0; }
 .flex-page {
-    background: white; width: 210mm; min-height: 297mm; box-sizing: border-box; padding: 6mm 5mm;
+    background: white; width: 210mm; box-sizing: border-box; padding: 6mm 5mm;
     margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     border: 1px solid #cbd5e0; border-radius: 4px;
     position: relative;
@@ -282,8 +282,7 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 .flex-content {
     column-count: 3; /* default, dioverride JS */
     column-gap: 5mm;
-    column-fill: auto;
-    height: 277mm; /* tinggi konten dalam 1 halaman A4 */
+    column-fill: balance; /* isi seimbang antar kolom */
 }
 .flex-shift-label {
     font-weight: bold; background: #2b6cb0; color: #fff;
@@ -311,7 +310,12 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
     #toolbar-fix, #toolbar-flex, .mode-tabs, #overflow-pages,
     .remove-shift-flex, .remove-train-flex { display: none !important; }
     .flex-page { box-shadow: none; border: none; padding: 0; margin: 0; width: 100%; min-height: auto; }
-    .flex-content { height: auto; } /* biarkan mengalir natural saat print */
+    .flex-content {
+        height: auto !important;
+        column-fill: balance !important; /* seimbangkan, tidak ada kolom kosong */
+    }
+    .flex-page { page-break-inside: auto; }
+    .flex-train-block { break-inside: avoid; page-break-inside: avoid; }
     .flex-shift-label { background: #2b6cb0 !important; color: #fff !important;
         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .flex-page .lok-row { background: #e8f0ff !important;
@@ -629,9 +633,10 @@ function renderFlexBasket() {
     }
     emptyEl.style.display = 'none'; contentEl.style.display = 'block';
 
-    // Terapkan kolom dan font
+    // Terapkan kolom dan font — tanpa batasan tinggi, biarkan mengalir natural
     contentEl.style.columnCount = flexCols;
-    contentEl.style.height      = (flexCols > 1) ? '277mm' : 'auto';
+    contentEl.style.columnFill  = 'balance'; // seimbangkan konten antar kolom
+    contentEl.style.height      = 'auto';    // tidak dibatasi, bisa multi-halaman
     contentEl.style.fontSize    = flexFontSize + 'px';
     contentEl.style.lineHeight  = '1.25';
 
