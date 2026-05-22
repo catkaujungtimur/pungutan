@@ -412,9 +412,9 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
 
             <!-- Tombol Navigasi Tanggal -->
             <div style="display:flex;gap:6px;margin-bottom:10px;">
-                <button class="btn btn-ghost" onclick="previousDay()" style="flex:0;padding:6px 8px;font-size:14px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">◀</button>
-                <button class="btn btn-success" onclick="setToday()" style="flex:1;font-size:12px;">📅 Hari Ini</button>
-                <button class="btn btn-ghost" onclick="nextDay()" style="flex:0;padding:6px 8px;font-size:14px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">▶</button>
+                <button class="btn btn-ghost" onclick="previousDay()" style="flex:0;padding:6px 8px;font-size:14px;width:32px;display:flex;align-items:center;justify-content:center;">◀</button>
+                <button class="btn btn-success" onclick="setToday()" style="flex:1;font-size:11px;padding:6px 8px;">📅 Hari Ini</button>
+                <button class="btn btn-ghost" onclick="nextDay()" style="flex:0;padding:6px 8px;font-size:14px;width:32px;display:flex;align-items:center;justify-content:center;">▶</button>
             </div>
 
             <!-- Judul -->
@@ -434,7 +434,7 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
             </div>
 
             <!-- Tombol Refresh — juga trigger Simpan & Muat Ulang -->
-            <button class="btn btn-ghost" onclick="saveConfigAndReload(); hardRefresh();" style="width:100%;margin:4px 0;font-size:11px;padding:4px;background:#edf2f7;">🔄 Refresh Tampilan</button>
+            <button class="btn btn-primary" onclick="saveConfigAndReload(); hardRefresh();" style="width:100%;margin:4px 0;font-size:11px;padding:6px 8px;">🔄 Refresh Tampilan</button>
 
             <!-- Daftar KA -->
             <div class="ka-list-container" id="ka-list-container">
