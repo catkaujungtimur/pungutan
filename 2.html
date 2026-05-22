@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Print Pungutan</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #2d3748; padding: 16px; }
+.container { max-width: 1100px; margin: 0 auto; }
+
+/* ===== TOP CONFIG PANEL ===== */
+.config-panel {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 10px 14px; margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.config-panel h2 { font-size: 13px; color: #1a365d; margin-bottom: 8px; }
+.config-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+label { font-size: 10px; font-weight: bold; color: #4a5568; }
+input[type=text], input[type=date], select {
+    padding: 5px 8px; border: 1px solid #cbd5e0; border-radius: 5px;
+    font-size: 12px; color: #2d3748; background: #fff;
+}
+input[type=text] { min-width: 280px; }
+.btn { padding: 6px 12px; border: none; border-radius: 5px; font-size: 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+.btn-primary  { background: #2b6cb0; color: #fff; }
+.btn-success  { background: #276749; color: #fff; }
+.btn-danger   { background: #c53030; color: #fff; }
+.btn-ghost    { background: #edf2f7; color: #4a5568; }
+.btn:hover    { filter: brightness(1.1); }
+
+/* ===== MAIN WORKSPACE: 2 kolom ===== */
+.workspace {
+    display: grid;
+    grid-template-columns: 310px 1fr;
+    gap: 12px;
+    align-items: start;
+}
+.left-panel {
+    display: flex; flex-direction: column; gap: 12px;
+    position: sticky; top: 16px;
+}
+
+/* ===== PANEL KIRI: Pilih KA ===== */
+.picker-panel {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: sticky; top: 16px;
+}
+.picker-panel h3 { font-size: 13px; color: #1a365d; margin-bottom: 10px; }
+
+.shift-tabs { display: flex; gap: 4px; margin-bottom: 10px; flex-wrap: wrap; }
+.shift-tab {
+    flex: 1; padding: 4px 3px; border: 1.5px solid #e2e8f0; border-radius: 5px;
+    background: #f7fafc; font-size: 10px; font-weight: bold; cursor: pointer;
+    text-align: center; color: #4a5568;
+}
+.shift-tab.active-malam { background: #2b6cb0; color: #fff; border-color: #2b6cb0; }
+.shift-tab.active-siang { background: #2f855a; color: #fff; border-color: #2f855a; }
+.shift-tab.active-pagi  { background: #c05621; color: #fff; border-color: #c05621; }
+
+.date-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.date-row label { font-size: 11px; font-weight: bold; color: #4a5568; white-space: nowrap; }
+.date-row input { font-size: 12px; padding: 5px 8px; flex: 1; min-width: 120px; }
+
+.ka-list-container {
+    border: 1px solid #e2e8f0; border-radius: 6px;
+    max-height: calc(100vh - 480px); min-height: 120px; overflow-y: auto; margin-bottom: 8px;
+}
+.ka-list-empty { text-align: center; padding: 30px 10px; color: #a0aec0; font-size: 12px; font-style: italic; }
+
+.ka-pick-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border-bottom: 1px solid #f0f4f8;
+    cursor: pointer; transition: background 0.1s;
+    user-select: none;
+}
+.ka-pick-item:last-child { border-bottom: none; }
+.ka-pick-item:hover { background: #ebf8ff; }
+.ka-pick-item.checked { background: #c6f6d5; }
+.ka-pick-item input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+.ka-pick-item .ka-name { font-weight: bold; font-size: 13px; font-family: monospace; color: #2d3748; }
+.ka-pick-item .ka-detail { font-size: 10px; color: #718096; flex: 1; }
+.ka-pick-item .ka-sarana-count {
+    font-size: 10px; background: #e2e8f0; padding: 1px 5px; border-radius: 3px; color: #4a5568;
+}
+
+.picker-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.picker-actions .btn { flex: 1; font-size: 12px; padding: 7px 8px; }
+
+/* Tanggal esok hari (khusus malam) */
+.esok-header {
+    background: #edf2f7; padding: 4px 10px;
+    font-size: 10px; font-weight: bold; color: #4a5568; text-transform: uppercase;
+    border-bottom: 1px solid #e2e8f0; border-top: 1px solid #e2e8f0;
+}
+
+/* ===== PANEL KANAN: Preview A4 ===== */
+.preview-panel { display: flex; flex-direction: column; gap: 10px; }
+.preview-toolbar {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 10px 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.preview-toolbar .toolbar-label { font-size: 12px; font-weight: bold; color: #4a5568; }
+.preview-toolbar select { font-size: 12px; padding: 5px 8px; }
+
+/* ===== A4 PAGE 3-COL ===== */
+.a4-page {
+    background: white; width: 210mm; min-height: 297mm; box-sizing: border-box;
+    padding: 8mm 6mm; margin: 0 auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12); border: 1px solid #cbd5e0; border-radius: 4px;
+}
+.three-col-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4mm;
+    width: 100%; min-height: 277mm; align-items: start;
+}
+.col-slot { min-height: 50px; }
+.col-slot.col-malam { grid-column: 1; }
+.col-slot.col-siang { grid-column: 2; border-left: 1px dashed #cbd5e0; border-right: 1px dashed #cbd5e0; padding: 0 2mm; }
+.col-slot.col-pagi  { grid-column: 3; }
+.col-slot-empty { display: flex; align-items: center; justify-content: center; min-height: 200px; color: #e2e8f0; font-size: 10px; text-align: center; }
+
+.shift-container-block { position: relative; }
+.shift-title-banner {
+    font-size: 9px; font-weight: bold; background: #2b6cb0; color: #fff;
+    padding: 3px 7px; border-radius: 3px; margin-bottom: 5px; text-transform: uppercase;
+}
+.remove-shift-btn {
+    position: absolute; top: -2px; right: -2px; background: #fed7d7; color: #c53030;
+    border: none; padding: 1px 5px; border-radius: 3px; cursor: pointer;
+    font-size: 9px; font-weight: bold; z-index: 10;
+}
+
+.train-block { background: #fff; border: 1px solid #cbd5e0; border-radius: 3px; margin-bottom: 4px; overflow: hidden; position: relative; page-break-inside: avoid; }
+.train-header-simple {
+    background: #f7fafc; border-bottom: 1px solid #cbd5e0;
+    padding: 3px 5px; display: flex; justify-content: space-between; align-items: center;
+    padding-right: 50px;
+}
+.train-header-simple h4 { margin: 0; font-size: 10px; color: #2d3748; font-weight: bold; }
+.train-header-simple .train-date { font-size: 10px; color: #718096; font-weight: bold; }
+.remove-train-btn {
+    position: absolute; top: 2px; right: 3px; background: #e53e3e; color: #fff;
+    border: none; padding: 1px 4px; border-radius: 2px; cursor: pointer; font-size: 8px; font-weight: bold;
+}
+table { width: 100%; border-collapse: collapse; }
+th { background: #edf2f7; font-size: 8px; padding: 2px 3px; text-align: left; border-bottom: 1px solid #cbd5e0; }
+td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertical-align: middle; font-weight: bold; }
+.tonase-row td { font-weight: bold; background: #f7fafc; }
+.status-d { background: #fff5f5 !important; color: #c53030; }
+.text-red { color: #c53030; }
+.lok-row { background: #f0f7ff; }
+
+/* Font sizes */
+.font-xs table { font-size: 7px !important; }
+.font-xs th, .font-xs td { padding: 1px 2px !important; }
+.font-xs .train-header-simple h4 { font-size: 8px !important; }
+.font-xs2 table { font-size: 6px !important; }
+.font-xs2 th, .font-xs2 td { padding: 1px 1px !important; }
+.font-xs2 .train-header-simple h4 { font-size: 7px !important; }
+.font-xs2 .train-header-simple { padding: 2px 4px !important; padding-right: 40px !important; }
+.font-xs3 table { font-size: 5px !important; }
+.font-xs3 th, .font-xs3 td { padding: 0px 1px !important; }
+.font-xs3 .train-header-simple h4 { font-size: 7px !important; }
+.font-xs3 .train-header-simple .train-date { font-size: 7px !important; }
+.font-xs3 .train-header-simple { padding: 1px 3px !important; padding-right: 35px !important; }
+.font-xs3 .train-block { margin-bottom: 2px !important; }
+.font-sm table { font-size: 8px !important; }
+.font-md table { font-size: 10px !important; }
+.font-md th, .font-md td { padding: 3px 4px !important; }
+
+/* Direction toggle */
+.direction-toggle { display:flex; gap:6px; margin-bottom:10px; }
+.dir-btn {
+    flex:1; padding:6px 8px; border:1.5px solid #e2e8f0; border-radius:5px;
+    background:#f7fafc; font-size:11px; font-weight:bold; cursor:pointer;
+    text-align:center; color:#4a5568; transition:all 0.15s;
+}
+.dir-btn.active { background:#276749; color:#fff; border-color:#276749; }
+.dir-btn.active.arr { background:#276749; border-color:#276749; }
+.dir-btn.active.dep { background:#744210; border-color:#744210; }
+
+/* ===== MODE FLEKSIBEL ===== */
+.flex-toolbar {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 8px 12px; margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.flex-toolbar label { font-size: 11px; color: #4a5568; white-space: nowrap; }
+.flex-toolbar select, .flex-toolbar input[type=range] { font-size: 12px; }
+.mode-tabs {
+    display: flex; gap: 6px; margin-bottom: 10px;
+}
+.mode-tab {
+    flex: 1; padding: 6px 10px; border: 1.5px solid #e2e8f0;
+    border-radius: 6px; background: #f7fafc; font-size: 11px;
+    font-weight: bold; cursor: pointer; text-align: center; color: #4a5568;
+}
+.mode-tab.active { background: #2b6cb0; color: #fff; border-color: #2b6cb0; }
+
+/* Layout fleksibel: konten mengalir bebas dalam kolom koran */
+.flex-page {
+    background: white; width: 210mm;
+    box-sizing: border-box; padding: 8mm 6mm;
+    margin: 0 auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    border: 1px solid #cbd5e0; border-radius: 4px;
+    column-gap: 5mm;
+}
+.flex-page .flex-content {
+    /* CSS columns: konten mengalir otomatis ke kolom berikutnya */
+    column-count: 3;
+    column-gap: 5mm;
+    column-fill: auto; /* isi kolom kiri dulu, baru geser ke kanan */
+}
+.flex-shift-label {
+    font-size: 8px; font-weight: bold; background: #2b6cb0; color: #fff;
+    padding: 3px 6px; border-radius: 3px; margin-bottom: 3px;
+    text-transform: uppercase; break-after: avoid; /* jangan pisah dari konten di bawahnya */
+    -webkit-column-break-after: avoid;
+    column-break-after: avoid;
+}
+.flex-train-block {
+    border: 0.5pt solid #cbd5e0; border-radius: 3px;
+    margin-bottom: 4px; overflow: hidden;
+    break-inside: avoid; /* PENTING: 1 KA tidak boleh terpotong */
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+}
+.flex-train-header {
+    background: #f7fafc; border-bottom: 1px solid #e2e8f0;
+    padding: 2px 5px; display: flex; justify-content: space-between;
+    font-weight: bold;
+}
+.flex-train-header span { font-size: inherit; }
+.flex-page table { width: 100%; border-collapse: collapse; }
+.flex-page th { background: #edf2f7; text-align: left; border-bottom: 1px solid #cbd5e0; }
+.flex-page td { border-bottom: 0.3pt dotted #e2e8f0; vertical-align: middle; }
+.flex-page .lok-row { background: #f0f7ff; }
+.flex-page .tonase-row td { font-weight: bold; background: #f7fafc; }
+.flex-page .status-d { background: #fff5f5 !important; color: #c53030; }
+.flex-page .text-red { color: #c53030; }
+
+@media print {
+    .flex-page { box-shadow: none; border: none; padding: 0; width: 100%; }
+    .flex-shift-label { background: #2b6cb0 !important; color: #fff !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .flex-train-block { border: 0.5pt solid #999; }
+    .flex-page .lok-row { background: #e8f0ff !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .flex-page .tonase-row td { background: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .flex-page .status-d { background: #fdd !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* ===== MODE FLEKSIBEL ===== */
+.flex-toolbar {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 8px 12px; margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.flex-toolbar label { font-size: 11px; color: #4a5568; white-space: nowrap; }
+.mode-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.mode-tab {
+    flex: 1; padding: 6px 10px; border: 1.5px solid #e2e8f0;
+    border-radius: 6px; background: #f7fafc; font-size: 11px;
+    font-weight: bold; cursor: pointer; text-align: center; color: #4a5568;
+}
+.mode-tab.active { background: #2b6cb0; color: #fff; border-color: #2b6cb0; }
+.flex-page {
+    background: white; width: 210mm; box-sizing: border-box; padding: 6mm 5mm;
+    margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    border: 1px solid #cbd5e0; border-radius: 4px;
+    position: relative;
+}
+.flex-content {
+    column-count: 3; /* default, dioverride JS */
+    column-gap: 5mm;
+    column-fill: balance; /* isi seimbang antar kolom */
+}
+.flex-shift-label {
+    font-weight: bold; background: #2b6cb0; color: #fff;
+    padding: 3px 6px; border-radius: 3px; margin-bottom: 3px;
+    text-transform: uppercase;
+    break-after: avoid; -webkit-column-break-after: avoid;
+}
+.flex-train-block {
+    border: 0.5pt solid #cbd5e0; border-radius: 3px; margin-bottom: 4px;
+    overflow: hidden;
+    break-inside: avoid; -webkit-column-break-inside: avoid; page-break-inside: avoid;
+}
+.flex-train-header {
+    background: #f7fafc; border-bottom: 1px solid #e2e8f0;
+    padding: 2px 5px; display: flex; justify-content: space-between; font-weight: bold;
+}
+.flex-page table { width: 100%; border-collapse: collapse; }
+.flex-page th { background: #edf2f7; text-align: left; border-bottom: 1px solid #cbd5e0; }
+.flex-page td { border-bottom: 0.3pt dotted #e2e8f0; vertical-align: middle; font-weight: bold; }
+.flex-page .lok-row { background: #f0f7ff; }
+.flex-page .tonase-row td { background: #f7fafc; }
+.flex-page .status-d { background: #fff5f5 !important; color: #c53030; }
+.flex-page .text-red { color: #c53030; }
+@media print {
+    #toolbar-fix, #toolbar-flex, .mode-tabs, #overflow-pages,
+    .remove-shift-flex, .remove-train-flex { display: none !important; }
+    .flex-page { box-shadow: none; border: none; padding: 0; margin: 0; width: 100%; min-height: auto; }
+    .flex-content {
+        height: auto !important;
+        column-fill: balance !important; /* seimbangkan, tidak ada kolom kosong */
+    }
+    .flex-page { page-break-inside: auto; }
+    .flex-train-block { break-inside: avoid; page-break-inside: avoid; }
+    .flex-shift-label { background: #2b6cb0 !important; color: #fff !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .flex-page .lok-row { background: #e8f0ff !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .flex-page .tonase-row td { background: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .flex-page .status-d { background: #fdd !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* Empty state */
+.a4-empty { text-align: center; padding: 80px 0; color: #a0aec0; }
+.a4-empty .icon { font-size: 30px; margin-bottom: 8px; }
+.a4-empty p { font-size: 12px; font-style: italic; }
+
+/* Dialog custom */
+.overlay-dialog { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; }
+.overlay-dialog.show { display:flex; }
+.dialog-box { background:#fff; border-radius:10px; padding:22px; max-width:340px; width:90%; box-shadow:0 8px 30px rgba(0,0,0,0.3); }
+.dialog-box h4 { margin:0 0 8px; font-size:14px; color:#1a365d; }
+.dialog-box p  { margin:0 0 16px; font-size:12px; color:#4a5568; }
+.dialog-btns   { display:flex; gap:8px; flex-direction:column; }
+.dialog-btns .btn { font-size:13px; padding:9px; }
+
+/* Multi-page A4 ke bawah */
+.a4-stack { display:flex; flex-direction:column; gap:20px; }
+.a4-page-label { font-size:10px; color:#a0aec0; text-align:center; margin-bottom:4px; font-style:italic; }
+
+/* ===== PRINT ===== */
+@media print {
+    @page { size: A4 portrait; margin: 8mm 6mm; }
+    body { background: #fff; padding: 0; }
+    .config-panel, .picker-panel, .preview-toolbar, .remove-shift-btn, .remove-train-btn, .col-slot-empty, #overflow-indicator { display: none !important; }
+    .workspace { display: block; }
+    .a4-page { box-shadow: none; border: none; padding: 0; width: 100%; min-height: auto; }
+    .three-col-grid { min-height: auto; gap: 3mm; }
+    .col-slot.col-siang { border-left: 0.5pt solid #aaa; border-right: 0.5pt solid #aaa; }
+    .shift-title-banner { background: #2b6cb0 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .train-block { border: 0.5pt solid #999; margin-bottom: 3px; }
+    th { background: #e8e8e8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tonase-row td { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .lok-row { background: #e8f0ff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .status-d { background: #fdd !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Dialog 3 Pilihan -->
+<div class="overlay-dialog" id="three-choice-dialog">
+    <div class="dialog-box">
+        <h4>⚠️ Shift sudah ada</h4>
+        <p id="dialog-msg">Dinas sudah ada di lembar cetak.</p>
+        <div class="dialog-btns">
+            <button class="btn btn-success" onclick="resolveDialog('tambah')">➕ Tambahkan ke yang sudah ada</button>
+            <button class="btn btn-primary" onclick="resolveDialog('ganti')">🔄 Ganti seluruhnya</button>
+            <button class="btn btn-ghost"   onclick="resolveDialog('batal')">✕ Batal</button>
+        </div>
+    </div>
+</div>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+
+    <!-- PANEL KIRI: Config + Picker -->
+    <div style="display:flex;flex-direction:column;gap:12px;position:sticky;top:16px;">
+
+        <!-- Config Card -->
+        <div class="config-panel" style="margin-bottom:0;">
+            <h2 style="font-size:12px;margin-bottom:6px;">🚆 Print Pungutan</h2>
+            <div class="form-group" style="margin-bottom:6px;">
+                <label>Google Spreadsheet ID</label>
+                <input type="text" id="spreadsheet-id-input" placeholder="Masukkan Spreadsheet ID..." style="width:100%;" />
+            </div>
+            <div class="form-group" style="margin-bottom:8px;">
+                <label>Nama Tab Sheet</label>
+                <input type="text" id="month-select" placeholder="contoh: MEI 2026..." style="width:100%;" oninput="localStorage.setItem('ss_sheet', this.value)" />
+            </div>
+            <div style="display:flex;gap:6px;">
+                <button class="btn btn-primary" id="btn-simpan" onclick="saveConfigAndReload()" style="flex:1;font-size:12px;">💾 Simpan & Muat Ulang</button>
+                <button class="btn btn-ghost" onclick="debugJSON()" style="font-size:10px;background:#e2e8f0;color:#a0aec0;border:1px dashed #cbd5e0;">🔬</button>
+            </div>
+        </div>
+
+        <!-- Picker Card -->
+        <div class="picker-panel" style="position:static;">
+
+            <!-- Tanggal di paling atas -->
+            <div class="date-row" style="margin-bottom:10px;">
+                <label>Tanggal:</label>
+                <input type="date" id="target-date" onchange="refreshKAList()" style="flex:1;" />
+            </div>
+
+            <!-- Tombol Navigasi Tanggal -->
+            <div style="display:flex;gap:6px;margin-bottom:10px;">
+                <button class="btn btn-ghost" onclick="previousDay()" style="flex:0;padding:6px 8px;font-size:14px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">◀</button>
+                <button class="btn btn-success" onclick="setToday()" style="flex:1;font-size:12px;">📅 Hari Ini</button>
+                <button class="btn btn-ghost" onclick="nextDay()" style="flex:0;padding:6px 8px;font-size:14px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">▶</button>
+            </div>
+
+            <!-- Judul -->
+            <h3 style="margin-bottom:5px;font-size:12px;">📋 Pilih KA untuk Lembar Cetak</h3>
+
+            <!-- Shift Tabs — rata kiri -->
+            <div class="shift-tabs" style="justify-content:flex-start;">
+                <div class="shift-tab active-malam" id="tab-malam" onclick="selectShiftTab('malam')">🌙 Malam</div>
+                <div class="shift-tab" id="tab-siang" onclick="selectShiftTab('siang')">☀️ Siang</div>
+                <div class="shift-tab" id="tab-pagi"  onclick="selectShiftTab('pagi')">🌅 Pagi</div>
+            </div>
+
+            <!-- Toggle Kedatangan / Keberangkatan -->
+            <div class="direction-toggle" style="margin-top:8px;">
+                <div class="dir-btn dep" id="dir-dep" onclick="selectDirection('dep')">🟠 KA Keberangkatan</div>
+                <div class="dir-btn arr active" id="dir-arr" onclick="selectDirection('arr')">🟢 KA Kedatangan</div>
+            </div>
+
+            <!-- Tombol Refresh — juga trigger Simpan & Muat Ulang -->
+            <button class="btn btn-ghost" onclick="saveConfigAndReload(); hardRefresh();" style="width:100%;margin:4px 0;font-size:11px;padding:4px;background:#edf2f7;">🔄 Refresh Tampilan</button>
+
+            <!-- Daftar KA -->
+            <div class="ka-list-container" id="ka-list-container">
+                <div class="ka-list-empty">Muat data terlebih dahulu.</div>
+            </div>
+
+            <!-- Aksi -->
+            <div class="picker-actions">
+                <button class="btn btn-success" onclick="addCheckedToBasket()">➕ Tambah ke Cetak</button>
+                <button class="btn btn-ghost"   onclick="clearChecks()">✕ Batal Centang</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PANEL KANAN: Preview A4 -->
+    <div class="preview-panel">
+
+        <!-- Tab pilih mode -->
+        <div class="mode-tabs">
+            <div class="mode-tab active" id="mode-tab-fix" onclick="switchMode('fix')">📌 Mode Default (3 Kolom)</div>
+            <div class="mode-tab" id="mode-tab-flex" onclick="switchMode('flex')">🔠 Mode Fleksibel</div>
+        </div>
+
+        <!-- Toolbar Mode Default -->
+        <div id="toolbar-fix" class="preview-toolbar">
+            <span class="toolbar-label">Lembar Cetak A4:</span>
+            <button class="btn btn-primary" onclick="window.print()">🖨️ Cetak</button>
+            <button class="btn btn-danger"  onclick="clearBasket()">🧹 Kosongkan</button>
+        </div>
+
+        <!-- Toolbar Mode Fleksibel -->
+        <div id="toolbar-flex" class="flex-toolbar" style="display:none;">
+            <label>Ukuran Font:</label>
+            <select id="flex-font-size" onchange="applyFlexFont(this.value)">
+                <option value="7">7px (default)</option>
+                <option value="8">8px</option>
+                <option value="9">9px</option>
+                <option value="10">10px</option>
+                <option value="11">11px</option>
+                <option value="12">12px</option>
+                <option value="14">14px</option>
+            </select>
+            <label>Kolom:</label>
+            <select id="flex-cols" onchange="applyFlexCols(this.value)">
+                <option value="3" selected>3 Kolom</option>
+                <option value="2">2 Kolom</option>
+                <option value="1">1 Kolom</option>
+            </select>
+            <button class="btn btn-primary" onclick="window.print()">🖨️ Cetak</button>
+            <button class="btn btn-danger"  onclick="clearBasket()">🧹 Kosongkan</button>
+        </div>
+
+        <!-- Indikator overflow -->
+        <div id="overflow-indicator" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:8px 12px;font-size:12px;color:#856404;margin-bottom:8px;"></div>
+
+        <div id="print-area-wrapper">
+            <!-- MODE DEFAULT: 3 kolom kaku -->
+            <div id="print-area-a4" class="a4-page font-xs3">
+                <div id="basket-empty-state" class="a4-empty">
+                    <div class="icon">📄</div>
+                    <p>Centang KA di panel kiri lalu klik <strong>Tambah ke Cetak</strong>.</p>
+                    <p style="margin-top:6px;font-size:10px;color:#cbd5e0;">Kolom Malam (kiri) · Siang (tengah) · Pagi (kanan)</p>
+                </div>
+                <div class="three-col-grid" id="basket-content" style="display:none;">
+                    <div class="col-slot col-malam" id="col-malam"><div class="col-slot-empty" id="empty-malam">— Malam —</div></div>
+                    <div class="col-slot col-siang" id="col-siang"><div class="col-slot-empty" id="empty-siang">— Siang —</div></div>
+                    <div class="col-slot col-pagi"  id="col-pagi" ><div class="col-slot-empty" id="empty-pagi" >— Pagi —</div></div>
+                </div>
+            </div>
+
+            <!-- MODE FLEKSIBEL: mengalir bebas -->
+            <div id="print-area-flex" class="flex-page" style="display:none;">
+                <div id="basket-empty-flex" class="a4-empty">
+                    <div class="icon">📄</div>
+                    <p>Centang KA di panel kiri lalu klik <strong>Tambah ke Cetak</strong>.</p>
+                </div>
+                <div class="flex-content" id="flex-content" style="display:none;"></div>
+            </div>
+
+            <div id="overflow-pages"></div>
+        </div>
+    </div>
+
+</div><!-- /workspace -->
+</div><!-- /container -->
+
+<script>
+// ============================================================
+// MODE MANAGER (Default / Fleksibel)
+// ============================================================
+function switchMode(mode) {
+    activeMode = mode;
+    // Tab UI
+    document.getElementById('mode-tab-fix').className  = 'mode-tab' + (mode==='fix'  ? ' active' : '');
+    document.getElementById('mode-tab-flex').className = 'mode-tab' + (mode==='flex' ? ' active' : '');
+    // Toolbar
+    document.getElementById('toolbar-fix').style.display  = mode==='fix'  ? 'flex' : 'none';
+    document.getElementById('toolbar-flex').style.display = mode==='flex' ? 'flex' : 'none';
+    // Area cetak
+    document.getElementById('print-area-a4').style.display   = mode==='fix'  ? 'block' : 'none';
+    document.getElementById('print-area-flex').style.display = mode==='flex' ? 'block' : 'none';
+    document.getElementById('overflow-pages').style.display  = mode==='fix'  ? 'block' : 'none';
+    if (mode === 'flex') renderFlexBasket();
+}
+
+function applyFlexFont(val) {
+    flexFontSize = parseInt(val);
+    renderFlexBasket();
+}
+
+function applyFlexCols(val) {
+    flexCols = parseInt(val);
+    renderFlexBasket();
+}
+
+function renderFlexBasket() {
+    const emptyEl   = document.getElementById('basket-empty-flex');
+    const contentEl = document.getElementById('flex-content');
+    if (printBasket.length === 0) {
+        emptyEl.style.display   = 'block';
+        contentEl.style.display = 'none';
+        return;
+    }
+    emptyEl.style.display   = 'none';
+    contentEl.style.display = 'block';
+
+    // Terapkan column-count dan font-size
+    contentEl.style.columnCount = flexCols;
+    contentEl.style.fontSize    = flexFontSize + 'px';
+    contentEl.style.lineHeight  = '1.3';
+
+    let html = '';
+    const shiftNames = { malam:'Dinas Malam', siang:'Dinas Siang', pagi:'Dinas Pagi' };
+
+    printBasket.forEach(shift => {
+        html += `<div class="flex-shift-label" style="font-size:${Math.max(flexFontSize, 7)}px;">${shift.label}</div>`;
+        shift.trains.forEach(train => {
+            let rows = '';
+            const lok = (train.noLok && train.noLok !== '-') ? `<strong>${train.noLok}</strong>` : '<span style="color:#aaa;">—</span>';
+            rows += `<tr class="lok-row"><td style="color:#888;font-style:italic;">Lok</td><td>${lok}</td><td style="color:#aaa;">-</td><td style="color:#aaa;">-</td><td></td></tr>`;
+            let urut = 1;
+            train.saranaList.forEach(s => {
+                const dCls = s.status === 'D' ? 'class="status-d"' : '';
+                const sarStyle = s.sarBgColor ? `style="background:${s.sarBgColor}!important;"` : '';
+                rows += `<tr><td>${urut++}</td><td ${sarStyle}>${s.noSarana}</td><td ${dCls}>${s.status}</td><td>${s.berat}</td><td>${s.catatan||''}</td></tr>`;
+            });
+            const thSize = `style="font-size:${flexFontSize}px;padding:1px 3px;"`;
+            const tdSize = `style="font-size:${flexFontSize}px;padding:0 3px;"`;
+            html += `<div class="flex-train-block">
+                <div class="flex-train-header" style="font-size:${flexFontSize+1}px;">
+                    <span>KA ${train.noKA} (${train.stn})</span>
+                    <span style="color:#718096;">${train.tanggal}</span>
+                </div>
+                <table>
+                    <thead><tr>
+                        <th ${thSize}>#</th><th ${thSize}>Sarana</th>
+                        <th ${thSize}>TM</th><th ${thSize}>Ton</th><th ${thSize}>Ket.</th>
+                    </tr></thead>
+                    <tbody>
+                        ${rows.replace(/<td/g, `<td ${tdSize.replace('style=','style=')}`).replace(/style="font-size:\d+px;padding:0 3px;"style=/g, 'style=')}
+                        <tr class="tonase-row">
+                            <td ${tdSize} colspan="3" style="text-align:right;font-size:${flexFontSize}px;padding:0 3px;">TOTAL</td>
+                            <td ${tdSize} class="text-red" style="font-size:${flexFontSize}px;padding:0 3px;">${train.totalTonase}</td>
+                            <td ${tdSize}></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>`;
+        });
+    });
+    contentEl.innerHTML = html;
+}
+
+// ============================================================
+// MODE MANAGER (Default / Fleksibel)
+// ============================================================
+let activeMode   = 'fix';
+let flexFontSize = 7;
+let flexCols     = 3;
+
+function switchMode(mode) {
+    activeMode = mode;
+    document.getElementById('mode-tab-fix').className  = 'mode-tab' + (mode==='fix'  ? ' active' : '');
+    document.getElementById('mode-tab-flex').className = 'mode-tab' + (mode==='flex' ? ' active' : '');
+    document.getElementById('toolbar-fix').style.display  = mode==='fix'  ? 'flex' : 'none';
+    document.getElementById('toolbar-flex').style.display = mode==='flex' ? 'flex' : 'none';
+    document.getElementById('print-area-a4').style.display   = mode==='fix'  ? 'block' : 'none';
+    document.getElementById('print-area-flex').style.display = mode==='flex' ? 'block' : 'none';
+    document.getElementById('overflow-pages').style.display  = mode==='fix'  ? 'block' : 'none';
+    if (mode === 'flex') renderFlexBasket();
+}
+
+function applyFlexFont(val) { flexFontSize = parseInt(val); renderFlexBasket(); }
+function applyFlexCols(val) { flexCols = parseInt(val); renderFlexBasket(); }
+
+function renderFlexBasket() {
+    const emptyEl   = document.getElementById('basket-empty-flex');
+    const contentEl = document.getElementById('flex-content');
+    if (!emptyEl || !contentEl) return;
+    if (printBasket.length === 0) {
+        emptyEl.style.display = 'block'; contentEl.style.display = 'none'; return;
+    }
+    emptyEl.style.display = 'none'; contentEl.style.display = 'block';
+
+    // Terapkan kolom dan font — tanpa batasan tinggi, biarkan mengalir natural
+    contentEl.style.columnCount = flexCols;
+    contentEl.style.columnFill  = 'balance'; // seimbangkan konten antar kolom
+    contentEl.style.height      = 'auto';    // tidak dibatasi, bisa multi-halaman
+    contentEl.style.fontSize    = flexFontSize + 'px';
+    contentEl.style.lineHeight  = '1.25';
+
+    let html = '';
+    const fs = `font-size:${flexFontSize}px;padding:1px 2px;line-height:1.25;`;
+
+    printBasket.forEach(shift => {
+        // Header shift — ikut mengalir dalam mode koran, tidak dipaksa ke atas
+        html += `<div class="flex-shift-label" style="font-size:${Math.max(flexFontSize,7)}px;display:flex;justify-content:space-between;align-items:center;break-after:avoid;-webkit-column-break-after:avoid;">
+            <span>${shift.label}</span>
+            <button class="remove-shift-flex" onclick="removeShift(${shift.id});renderFlexBasket();"
+                style="background:#fed7d7;color:#c53030;border:none;padding:1px 5px;border-radius:3px;cursor:pointer;font-size:8px;font-weight:bold;">✕ Hapus</button>
+        </div>`;
+
+        shift.trains.forEach(train => {
+            let rows = '';
+            const lok = (train.noLok && train.noLok !== '-') ? `<strong>${train.noLok}</strong>` : '<span style="color:#aaa;">—</span>';
+            rows += `<tr class="lok-row"><td style="${fs}color:#888;font-style:italic;">Lok</td><td style="${fs}">${lok}</td><td style="${fs}color:#aaa;">-</td><td style="${fs}color:#aaa;">-</td><td style="${fs}"></td></tr>`;
+            let urut = 1;
+            train.saranaList.forEach(s => {
+                const dStyle = s.status === 'D' ? 'background:#fff5f5;color:#c53030;' : '';
+                const sarSt  = s.sarBgColor ? `background:${s.sarBgColor}!important;` : '';
+                rows += `<tr>
+                    <td style="${fs}">${urut++}</td>
+                    <td style="${fs}${sarSt}">${s.noSarana}</td>
+                    <td style="${fs}${dStyle}">${s.status}</td>
+                    <td style="${fs}">${s.berat}</td>
+                    <td style="${fs}">${s.catatan||''}</td>
+                </tr>`;
+            });
+            rows += `<tr class="tonase-row">
+                <td style="${fs}" colspan="3" align="right">TOTAL</td>
+                <td style="${fs}" class="text-red">${train.totalTonase}</td>
+                <td style="${fs}"></td>
+            </tr>`;
+
+            html += `<div class="flex-train-block" style="position:relative;">
+                <button class="remove-train-flex" onclick="removeTrain('${train.uniqueTrainId}');renderFlexBasket();"
+                    style="position:absolute;top:2px;right:3px;background:#e53e3e;color:#fff;border:none;padding:1px 4px;border-radius:2px;cursor:pointer;font-size:8px;font-weight:bold;z-index:2;">✕</button>
+                <div class="flex-train-header" style="font-size:${flexFontSize+1}px;padding-right:28px;">
+                    <span>KA ${train.noKA} (${train.stn})</span>
+                    <span style="color:#718096;">${train.tanggal}</span>
+                </div>
+                <table>
+                    <thead><tr>
+                        <th style="${fs}">#</th><th style="${fs}">Sarana</th>
+                        <th style="${fs}">TM</th><th style="${fs}">Ton</th><th style="${fs}">Ket.</th>
+                    </tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+        });
+    });
+    contentEl.innerHTML = html;
+}
+
+// ============================================================
+// DIALOG 3 PILIHAN
+// ============================================================
+let _dialogResolve = null;
+function showThreeChoiceDialog(shiftName) {
+    return new Promise(resolve => {
+        _dialogResolve = resolve;
+        document.getElementById('dialog-msg').textContent =
+            `Dinas ${shiftName} sudah ada di lembar cetak. Apa yang ingin kamu lakukan?`;
+        document.getElementById('three-choice-dialog').classList.add('show');
+    });
+}
+function resolveDialog(choice) {
+    document.getElementById('three-choice-dialog').classList.remove('show');
+    if (_dialogResolve) { _dialogResolve(choice); _dialogResolve = null; }
+}
+
+// Refresh tampilan: reset UI ke state aktif tanpa reload halaman
+function hardRefresh() {
+    // Trigger simpan & muat ulang (reload data dari sheet)
+    saveConfigAndReload();
+    // Re-apply direction dan shift state
+    allParsedData = activeDir === 'dep' ? allParsedDeparture : allParsedArrival;
+    document.getElementById('dir-arr').className = 'dir-btn arr' + (activeDir==='arr' ? ' active' : '');
+    document.getElementById('dir-dep').className = 'dir-btn dep' + (activeDir==='dep' ? ' active' : '');
+    ['malam','siang','pagi'].forEach(s => {
+        const tab = document.getElementById('tab-'+s);
+        tab.className = 'shift-tab';
+        if (s === activeShift) tab.classList.add('active-'+activeShift);
+    });
+}
+
+// ============================================================
+// CONFIG & STATE
+// ============================================================
+const DEFAULT_ID = 'MASUKKAN_ID_SPREADSHEET_DI_SINI';
+const BULAN_LIST = ["JAN 2026","FEB 2026","MAR 2026","APR 2026","MEI 2026","JUNI 2026","JULI 2026"];
+
+let currentSpreadsheetId = localStorage.getItem('ss_id') || DEFAULT_ID;
+let currentSheetName     = localStorage.getItem('ss_sheet') || autoSheet();
+let allParsedData        = []; // data aktif (sesuai activeDir)
+let allParsedArrival     = []; // KA kedatangan (kolom P/Q/R)
+let allParsedDeparture   = []; // KA keberangkatan (kolom A/B/C)
+let activeDir            = 'dep'; // 'dep' = keberangkatan (default), 'arr' = kedatangan
+let printBasket          = []; // [{id, shiftType, label, trains:[...]}]
+let activeShift          = 'malam'; // tab yang aktif
+
+function autoSheet() {
+    const m = new Date().getMonth();
+    return BULAN_LIST[m] || 'MEI 2026';
+}
+
+// Init UI
+document.getElementById('spreadsheet-id-input').value = currentSpreadsheetId;
+document.getElementById('month-select').value = currentSheetName;
+// Sync kedua date picker
+const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+document.getElementById('target-date').value = todayStr;
+// Untuk input text, juga set value
+if (document.getElementById('month-select').tagName === 'INPUT') {
+    document.getElementById('month-select').value = currentSheetName;
+}
+const today = new Date();
+document.getElementById('target-date').value =
+    `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+// ============================================================
+// CSV PARSER (menangani tanda kutip dan koma dalam sel)
+// ============================================================
+function parseCSVRow(line) {
+    const cells = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') { if (inQ && line[i+1]==='"') { cur+='"'; i++; } else { inQ=!inQ; } }
+        else if (ch === ',' && !inQ) { cells.push(cur.trim()); cur=''; }
+        else { cur += ch; }
+    }
+    cells.push(cur.trim());
+    return cells;
+}
+
+function parseCSV(csvText) {
+    const rows = csvText.split('\n').map(l => parseCSVRow(l));
+    allParsedData = [];
+
+    // AUTO-DETECT kolom dari baris header (baris 0)
+    const headerRow = rows[0] || [];
+    function findCol(keywords) {
+        for (let i = 0; i < headerRow.length; i++) {
+            const v = (headerRow[i] || '').toUpperCase().trim();
+            if (keywords.some(k => v.includes(k))) return i;
+        }
+        return -1;
+    }
+    const cTgl = findCol(['TANGGAL','TGL']);
+    const cStn = findCol(['STASIUN','STN']);
+    const cKA  = findCol(['NO KA','NOKA','NO_KA']);
+    const cLok = findCol(['LOKOMOTIF','LOK']);
+    const cSar = findCol(['KERETA','SARANA']);
+    const cTM  = findCol(['TRAINMERK','TRAIN MERK']);
+    const cTon = findCol(['TON']);
+    const cKet = findCol(['KETERANGAN','KET']);
+
+    // Kolom yang terdeteksi (fallback ke hardcode lama jika tidak ditemukan)
+    const C_TGL = cTgl >= 0 ? cTgl : 15;
+    const C_STN = cStn >= 0 ? cStn : 16;
+    const C_KA  = cKA  >= 0 ? cKA  : 17;
+    const C_LOK = cLok >= 0 ? cLok : 22;
+    const C_SAR = cSar >= 0 ? cSar : 23;
+    const C_TM  = cTM  >= 0 ? cTM  : 24;
+    const C_TON = cTon >= 0 ? cTon : 25;
+    const C_KET = cKet >= 0 ? cKet : 26;
+
+    let currentTrain = null;
+    let isCollecting = false;
+
+    rows.forEach((row, idx) => {
+        if (idx === 0) return;
+        const tanggal = (row[C_TGL] || '').trim();
+        const stn     = (row[C_STN] || '').trim();
+
+        // Baca noKA: coba C_KA dulu, jika kosong scan kolom C_KA-2 s/d C_KA+2
+        // Ini menangani kasus merged cell atau kolom geser saat export CSV
+        let noKARaw = (row[C_KA] || '').trim();
+        // Jangan ambil nilai dari kolom STN sebagai noKA
+        // (bug sebelumnya: jika C_KA kosong, scan menangkap nilai STN)
+
+        const isKAHeader = tanggal && noKARaw
+                           && tanggal !== 'TANGGAL'
+                           && tanggal !== 'STASIUN KEDATANGAN';
+
+        if (isKAHeader) {
+            if (currentTrain) allParsedData.push(currentTrain);
+            currentTrain = {
+                tanggal:     tanggal,
+                stn:         stn || '-',
+                noKA:        noKARaw.toUpperCase().replace(/\s+/g, ''),
+                rowIndex:    idx,
+                noLok:       (row[C_LOK] || '').trim() || '-',
+                saranaList:  [],
+                totalTonase: '-'
+            };
+            isCollecting = true;
+        } else if (currentTrain && isCollecting) {
+            const noSarana = (row[C_SAR] || '').trim();
+            if (!noSarana) return;
+            const status  = (row[C_TM]  || '').trim();
+            const berat   = (row[C_TON] || '').trim();
+            const catatan = (row[C_KET] || '').trim();
+            if (noSarana === 'TONASE') {
+                currentTrain.totalTonase = berat;
+                isCollecting = false;
+            } else {
+                currentTrain.saranaList.push({ noSarana, status, berat, catatan });
+            }
+        }
+    });
+    if (currentTrain) allParsedData.push(currentTrain);
+    refreshKAList();
+}
+
+// ============================================================
+// PARSE GOOGLE VISUALIZATION JSON
+// Menangani semua tipe data dengan benar termasuk teks huruf
+// ============================================================
+function cellVal(cell) {
+    if (!cell) return '';
+    if (cell.v === null || cell.v === undefined) {
+        // v null tapi mungkin ada f (formatted) — ambil jika ada
+        return (cell.f !== null && cell.f !== undefined) ? String(cell.f).trim() : '';
+    }
+    // Tanggal: format ke DD/MM/YY
+    if (cell.v instanceof Date || (typeof cell.v === 'string' && cell.v.startsWith('Date('))) {
+        try {
+            const d = cell.v instanceof Date ? cell.v : new Date(cell.v.replace('Date(','').replace(')','').split(',').map((x,i)=>i===1?+x+1:+x).join('-'));
+            // Ambil dari formatted jika ada
+            if (cell.f) return cell.f;
+            return `${d.getDate()}/${d.getMonth()+1}/${String(d.getFullYear()).slice(-2)}`;
+        } catch(e) {}
+    }
+    // Selalu prioritaskan formatted string (f) — ini yang terlihat di layar
+    if (cell.f !== undefined && cell.f !== null && cell.f !== '') return String(cell.f).trim();
+    return String(cell.v).trim();
+}
+
+// Ambil CSV export untuk overlay nilai teks yang hilang dari JSON
+async function fetchCSVOverlay() {
+    const url = `https://docs.google.com/spreadsheets/d/${currentSpreadsheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(currentSheetName)}`;
+    const r = await fetch(url);
+    const text = await r.text();
+    return text.split('\n').map(l => parseCSVRow(l));
+}
+
+// Parse JSON dengan overlay CSV untuk kolom NO KA yang kosong
+function parseGVizJSONwithCSV(data, csvRows) {
+    // Bangun map: rowIndex → nilai CSV kolom 17 (NO KA kedatangan)
+    // csvRows[0] = header, csvRows[1] = data row 1, dst
+    const csvKAMap = new Map(); // rowIndex JSON (0-based) → noKA dari CSV
+    csvRows.forEach((row, i) => {
+        if (i === 0) return; // skip header CSV
+        const v = (row[17] || '').trim();
+        if (v) csvKAMap.set(i - 1, v); // JSON row index = CSV index - 1
+    });
+
+    // Sekarang parse JSON, tapi jika kolom KA null, ambil dari CSV map
+    const cols = data.table.cols || [];
+    const grows = data.table.rows || [];
+
+    function findColByLabel(keywords) {
+        for (let i = 0; i < cols.length; i++) {
+            const lbl = (cols[i].label || '').toUpperCase().trim();
+            if (keywords.some(k => lbl.includes(k))) return i;
+        }
+        return -1;
+    }
+
+    // ================================================================
+    // DETEKSI KOLOM OTOMATIS dari label header JSON
+    // Struktur sheet: [Keberangkatan A-L] [OKT M-O] [Kedatangan P-AA]
+    // ================================================================
+
+    // Cari semua indeks kolom "NO KA" (ada 2: keberangkatan & kedatangan)
+    let kaIndices = [];
+    cols.forEach((c,i) => {
+        if ((c.label||'').toUpperCase().trim() === 'NO KA') kaIndices.push(i);
+    });
+
+    // Cari semua indeks "STAMFORMASI LOKOMOTIF" (ada 2)
+    let lokIndices = [];
+    cols.forEach((c,i) => {
+        if ((c.label||'').toUpperCase().includes('STAMFORMASI')) lokIndices.push(i);
+    });
+
+    // Cari semua indeks "KERETA" / sarana (ada 2)
+    let sarIndices = [];
+    cols.forEach((c,i) => {
+        if ((c.label||'').toUpperCase().trim() === 'KERETA') sarIndices.push(i);
+    });
+
+    // Cari semua indeks "TRAINMERK" (ada 2)
+    let tmIndices = [];
+    cols.forEach((c,i) => {
+        if ((c.label||'').toUpperCase().includes('TRAINMERK')) tmIndices.push(i);
+    });
+
+    // Cari semua indeks "TON" (ada 2)
+    let tonIndices = [];
+    cols.forEach((c,i) => {
+        if ((c.label||'').toUpperCase().trim() === 'TON') tonIndices.push(i);
+    });
+
+    // Cari semua indeks "KETERANGAN" (ada 2)
+    let ketIndices = [];
+    cols.forEach((c,i) => {
+        if ((c.label||'').toUpperCase().includes('KETERANGAN')) ketIndices.push(i);
+    });
+
+    // Keberangkatan = set PERTAMA (indeks lebih kecil)
+    // Kedatangan = set KEDUA (indeks lebih besar)
+    const D_KA  = kaIndices[0]  ?? 2;
+    const D_TGL = D_KA - 2;
+    const D_STN = D_KA - 1;
+    const D_LOK = lokIndices[0] ?? (D_KA + 5);
+    const D_SAR = sarIndices[0] ?? (D_LOK + 1);
+    const D_TM  = tmIndices[0]  ?? (D_SAR + 1);
+    const D_TON = tonIndices[0] ?? (D_TM  + 1);
+    const D_KET = ketIndices[0] ?? (D_TON + 1);
+
+    const C_KA  = kaIndices[1]  ?? 17;
+    const C_TGL = C_KA - 2;
+    const C_STN = C_KA - 1;
+    const C_LOK = lokIndices[1] ?? (C_KA + 5);
+    const C_SAR = sarIndices[1] ?? (C_LOK + 1);
+    const C_TM  = tmIndices[1]  ?? (C_SAR + 1);
+    const C_TON = tonIndices[1] ?? (C_TM  + 1);
+    const C_KET = ketIndices[1] ?? (C_TON + 1);
+
+    // ================================================================
+    // PARSER SATU ARAH
+    // Kunci: baris header KA juga mengandung LOK dan SARANA PERTAMA
+    // di baris yang sama. Baris berikutnya adalah sarana ke-2, dst.
+    // TONASE = batas keras akhir KA. Setelah TONASE, tunggu header baru.
+    // ================================================================
+    function parseSingleDirection(cTgl, cStn, cKa, cLok, cSar, cTm, cTon, cKet, csvColKA) {
+        const result = [];
+        let cur = null;
+        let collecting = false;
+
+        grows.forEach((grow, idx) => {
+            const cells = grow.c || [];
+            const get = i => cellVal(cells[i]);
+
+            const tanggal = get(cTgl);
+            const stn     = get(cStn);
+            let noKARaw   = get(cKa);
+
+            // Overlay CSV untuk KA huruf yang tidak terbaca JSON (tipe number)
+            if (!noKARaw && csvColKA !== null) {
+                const csvRow = csvRows[idx + 1];
+                if (csvRow) noKARaw = (csvRow[csvColKA] || '').trim();
+            }
+
+            const isHeader = tanggal && noKARaw
+                && !tanggal.includes('STASIUN')
+                && tanggal !== 'TANGGAL'
+                && tanggal !== 'NAMA';
+
+            if (isHeader) {
+                if (cur) result.push(cur);
+
+                // Baris header KA juga berisi LOK dan SARANA PERTAMA
+                const lokVal  = get(cLok) || '-';
+                const sar1    = get(cSar);  // sarana pertama (baris sama dgn header)
+                const tm1     = get(cTm);
+                const berat1  = get(cTon);
+                const cat1    = get(cKet);
+
+                cur = {
+                    tanggal: tanggal, stn: stn||'-',
+                    noKA: noKARaw.toUpperCase().replace(/\s+/g,''),
+                    rowIndex: idx,
+                    noLok: lokVal,
+                    saranaList: [],
+                    totalTonase: '-'
+                };
+
+                // Tambah sarana pertama jika ada dan bukan TONASE
+                if (sar1 && !sar1.toUpperCase().includes('TONASE')) {
+                    cur.saranaList.push({ noSarana: sar1, status: tm1, berat: berat1, catatan: cat1 });
+                } else if (sar1 && sar1.toUpperCase().includes('TONASE')) {
+                    cur.totalTonase = berat1;
+                }
+                collecting = true;
+
+            } else if (cur && collecting) {
+                const noSarana = get(cSar);
+
+                // TONASE = batas keras
+                if (noSarana && noSarana.toUpperCase().includes('TONASE')) {
+                    cur.totalTonase = get(cTon);
+                    collecting = false;
+                    return;
+                }
+
+                // Kosong = lewati (baris pemisah)
+                if (!noSarana) return;
+
+                // Sarana valid — ambil juga warna background dari cell JSON
+                const sarCell = cells[cSar];
+                const sarBg   = sarCell && sarCell.p && sarCell.p['background-color']
+                    ? sarCell.p['background-color'] : null;
+                cur.saranaList.push({
+                    noSarana,
+                    status:    get(cTm),
+                    berat:     get(cTon),
+                    catatan:   get(cKet),
+                    sarBgColor: sarBg  // warna background kolom sarana dari sheet
+                });
+            }
+        });
+        if (cur) result.push(cur);
+        return result;
+    }
+
+    allParsedArrival   = parseSingleDirection(C_TGL, C_STN, C_KA, C_LOK, C_SAR, C_TM, C_TON, C_KET, 17);
+    allParsedDeparture = parseSingleDirection(D_TGL, D_STN, D_KA, D_LOK, D_SAR, D_TM, D_TON, D_KET, 2);
+
+    // Default tampilkan sesuai activeDir
+    allParsedData = activeDir === 'dep' ? allParsedDeparture : allParsedArrival;
+    refreshKAList();
+}
+
+function parseGVizJSON(data) {
+    allParsedData = [];
+    if (!data || !data.table) return;
+
+    const cols = data.table.cols || [];
+    const grows = data.table.rows || [];
+
+    // Cari index kolom dari label header
+    function findColByLabel(keywords) {
+        for (let i = 0; i < cols.length; i++) {
+            const lbl = (cols[i].label || '').toUpperCase().trim();
+            if (keywords.some(k => lbl.includes(k))) return i;
+        }
+        return -1;
+    }
+
+    const C_TGL = findColByLabel(['TANGGAL','TGL']);
+    const C_STN = findColByLabel(['STASIUN','STN']);
+    const C_KA  = findColByLabel(['NO KA','NOKA']);
+    const C_LOK = findColByLabel(['LOKOMOTIF','LOK']);
+    const C_SAR = findColByLabel(['KERETA','SARANA']);
+    const C_TM  = findColByLabel(['TRAINMERK','TRAIN MERK']);
+    const C_TON = findColByLabel(['TON']);
+    const C_KET = findColByLabel(['KETERANGAN','KET']);
+
+    // Fallback
+    const cTgl = C_TGL >= 0 ? C_TGL : 15;
+    const cStn = C_STN >= 0 ? C_STN : 16;
+    const cKA  = C_KA  >= 0 ? C_KA  : 17;
+    const cLok = C_LOK >= 0 ? C_LOK : 22;
+    const cSar = C_SAR >= 0 ? C_SAR : 23;
+    const cTM  = C_TM  >= 0 ? C_TM  : 24;
+    const cTon = C_TON >= 0 ? C_TON : 25;
+    const cKet = C_KET >= 0 ? C_KET : 26;
+
+    let currentTrain = null;
+    let isCollecting = false;
+
+    grows.forEach((grow, idx) => {
+        const cells = grow.c || [];
+        const get = i => cellVal(cells[i]);
+
+        const tanggal = get(cTgl);
+        const stn     = get(cStn);
+        const noKARaw = get(cKA);
+
+        const isKAHeader = tanggal && noKARaw
+                           && tanggal !== 'TANGGAL'
+                           && tanggal !== 'STASIUN KEDATANGAN'
+                           && tanggal !== 'STASIUN AWAL KEBERANGKATAN';
+
+        if (isKAHeader) {
+            if (currentTrain) allParsedData.push(currentTrain);
+            currentTrain = {
+                tanggal:     tanggal,
+                stn:         stn || '-',
+                noKA:        noKARaw.toUpperCase().replace(/\s+/g, ''),
+                rowIndex:    idx,
+                noLok:       get(cLok) || '-',
+                saranaList:  [],
+                totalTonase: '-'
+            };
+            isCollecting = true;
+        } else if (currentTrain && isCollecting) {
+            const noSarana = get(cSar);
+            if (!noSarana) return;
+            const status  = get(cTM);
+            const berat   = get(cTon);
+            const catatan = get(cKet);
+            if (noSarana === 'TONASE' || noSarana === 'TOTAL' || noSarana.includes('TONASE')) {
+                currentTrain.totalTonase = berat;
+                isCollecting = false;
+            } else {
+                currentTrain.saranaList.push({ noSarana, status, berat, catatan });
+            }
+        }
+    });
+    if (currentTrain) allParsedData.push(currentTrain);
+    refreshKAList();
+}
+
+// ============================================================
+// LOAD DATA
+// ============================================================
+function loadData() {
+    if (!currentSpreadsheetId || currentSpreadsheetId === DEFAULT_ID) {
+        document.getElementById('ka-list-container').innerHTML =
+            '<div class="ka-list-empty">Masukkan Spreadsheet ID dan klik Simpan & Muat Ulang.</div>';
+        return;
+    }
+    document.getElementById('ka-list-container').innerHTML =
+        '<div class="ka-list-empty">⏳ Memuat data dari Google Sheets...</div>';
+    // Gunakan tq query yang memformat kolom NO KA (C / kolom ke-3 kedatangan) sebagai string
+    // "format C '0'" memaksa Google menampilkan nilai number kolom C sebagai string
+    // Untuk sheet kedatangan (kolom R = index 17 di full sheet, tapi di tq = kolom ke-17)
+    // Kita gunakan query: select * dengan format pada kolom yang berisi NO KA
+    // Label: "NO KA" ada di index 2 (kedatangan) dan index 17 (full)
+    // Kita format SEMUA kolom number sebagai string agar "212F" tidak hilang
+    const tq = encodeURIComponent("select *");
+    const url = `https://docs.google.com/spreadsheets/d/${currentSpreadsheetId}/gviz/tq?tqx=out:json&tq=${tq}&sheet=${encodeURIComponent(currentSheetName)}`;
+    fetch(url)
+        .then(r => r.text())
+        .then(raw => {
+            const json = raw.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+            if (!json) throw new Error('Format response tidak dikenali');
+            const data = JSON.parse(json[1]);
+            // Patch: untuk kolom bertipe number yang seharusnya bisa berisi teks,
+            // kita overlay dengan data dari CSV export yang membaca formatted values
+            return fetchCSVOverlay().then(csvRows => {
+                parseGVizJSONwithCSV(data, csvRows);
+            }).catch(() => {
+                // Jika CSV gagal, tetap parse JSON saja
+                parseGVizJSON(data);
+            });
+        })
+        .catch(e => {
+            document.getElementById('ka-list-container').innerHTML =
+                `<div class="ka-list-empty" style="color:#e53e3e;">❌ Gagal memuat: ${e.message}</div>`;
+        });
+}
+
+function debugJSON() {
+    if (!currentSpreadsheetId || currentSpreadsheetId === DEFAULT_ID) {
+        alert('Masukkan Spreadsheet ID dulu.'); return;
+    }
+    const url = `https://docs.google.com/spreadsheets/d/${currentSpreadsheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(currentSheetName)}`;
+    fetch(url).then(r => r.text()).then(raw => {
+        const json = raw.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+        if (!json) { alert('Format tidak dikenali'); return; }
+        const data = JSON.parse(json[1]);
+        const cols = data.table.cols || [];
+        const grows = data.table.rows || [];
+        const w = window.open('', '_blank', 'width=1100,height=800,scrollbars=yes');
+        let html = `<html><head><title>Debug JSON</title><style>
+            body{font-family:monospace;font-size:10px;padding:10px;}
+            table{border-collapse:collapse;}
+            th,td{border:1px solid #ccc;padding:2px 5px;white-space:nowrap;}
+            th{background:#333;color:#fff;position:sticky;top:0;}
+            .hasval{background:#fffde7;font-weight:bold;color:#b7500a;}
+            .rownum{background:#eee;color:#666;}
+        </style></head><body>`;
+
+        // Tampilkan label kolom
+        html += '<h3>LABEL KOLOM:</h3><table><tr><th>idx</th><th>label</th><th>type</th></tr>';
+        cols.forEach((c,i) => {
+            const lbl = c.label||'';
+            html += `<tr><td>${i}</td><td class="${lbl?'hasval':''}">${lbl}</td><td>${c.type||''}</td></tr>`;
+        });
+        html += '</table><br>';
+
+        // Tampilkan baris 1-80: semua sel yang ada nilainya, tampilkan v dan f
+        html += '<h3>BARIS 1-80 (v=raw, f=formatted):</h3><table>';
+        const maxC = Math.min(cols.length, 30);
+        html += '<tr><th>baris</th>';
+        for(let c=0;c<maxC;c++) html += `<th>${c}<br><small>${(cols[c].label||'').substring(0,8)}</small></th>`;
+        html += '</tr>';
+
+        grows.slice(0,80).forEach((row, i) => {
+            const cells = row.c || [];
+            const anyVal = cells.some(c => c && (c.v !== null && c.v !== undefined && c.v !== ''));
+            if (!anyVal) return;
+            html += `<tr><td class="rownum">${i+1}</td>`;
+            for(let c=0;c<maxC;c++) {
+                const cell = cells[c];
+                const v = cell ? cell.v : null;
+                const f = cell ? cell.f : null;
+                const display = (f !== null && f !== undefined && f !== '') ? f : (v !== null && v !== undefined ? v : '');
+                const hi = (display !== '') ? 'hasval' : '';
+                html += `<td class="${hi}" title="v=${v} f=${f}">${display}</td>`;
+            }
+            html += '</tr>';
+        });
+        html += '</table></body></html>';
+        w.document.write(html); w.document.close();
+    }).catch(e => alert('Error: '+e.message));
+}
+
+function debugCSV() {
+    if (!currentSpreadsheetId || currentSpreadsheetId === DEFAULT_ID) {
+        alert('Masukkan Spreadsheet ID dulu.'); return;
+    }
+    const url = `https://docs.google.com/spreadsheets/d/${currentSpreadsheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(currentSheetName)}`;
+    fetch(url).then(r => r.text()).then(csv => {
+        const rows = csv.split('\n').map(l => parseCSVRow(l));
+        const w = window.open('', '_blank', 'width=1200,height=800,scrollbars=yes');
+        // Temukan baris header (baris 0) untuk lihat label kolom
+        const headerRow = rows[0] || [];
+        const maxCols = Math.max(...rows.slice(0,10).map(r=>r.length));
+        
+        let html = `<html><head><title>Debug CSV</title><style>
+            body{font-family:monospace;font-size:10px;padding:10px;}
+            table{border-collapse:collapse;}
+            th,td{border:1px solid #ccc;padding:2px 4px;white-space:nowrap;max-width:120px;overflow:hidden;}
+            th{background:#333;color:#fff;position:sticky;top:0;}
+            tr:nth-child(even){background:#f9f9f9;}
+            .has-val{background:#fffde7 !important;font-weight:bold;color:#b7500a;}
+            .row-num{background:#eee !important;color:#666;font-weight:bold;}
+            .col-idx{background:#1a365d;color:#fff;}
+        </style></head><body>`;
+        
+        html += `<h3>Total: ${rows.length} baris. Header row[0] punya ${headerRow.length} kolom. Cari kolom yg isi "NO KA":</h3>`;
+        
+        // Tampilkan header row dulu untuk cari posisi kolom
+        html += '<h4>BARIS 0 (Header):</h4><table><tr><th>idx</th><th>nilai</th></tr>';
+        headerRow.forEach((v,i) => {
+            const hi = v && v.trim() ? 'has-val' : '';
+            html += `<tr><td class="col-idx">${i}</td><td class="${hi}">${v||''}</td></tr>`;
+        });
+        html += '</table>';
+        
+        // Tampilkan baris 1-80, semua kolom yang tidak kosong
+        // Tampilkan RAW lines (sebelum parsing) untuk cek format CSV asli
+        const rawLines = csv.split('\n');
+        html += '<br><h4>RAW CSV — baris yang punya isi di sekitar kolom 15-17 (sebelum parsing):</h4>';
+        html += '<table><tr><th>baris</th><th>RAW LINE (kolom 15 dst)</th></tr>';
+        rawLines.slice(1, 120).forEach((line, i) => {
+            // Hanya tampilkan baris yang mengandung KTG (penanda baris KA kedatangan)
+            if (!line.includes('KTG')) return;
+            // Escape HTML
+            const safe = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            html += `<tr><td class="row-num">${i+1}</td><td style="font-size:9px;color:#333;">${safe}</td></tr>`;
+        });
+        html += '</table>';
+
+        html += '<br><h4>BARIS 1-80 (parsed, semua kolom berisi nilai):</h4><table>';
+        html += '<tr><th class="row-num">baris</th>';
+        for(let c=0;c<maxCols;c++) html += `<th>${c}</th>`;
+        html += '</tr>';
+        
+        rows.slice(1,80).forEach((row,i) => {
+            const anyVal = row.some(v => v && v.trim());
+            if (!anyVal) return;
+            html += `<tr><td class="row-num">${i+1}</td>`;
+            for(let c=0;c<maxCols;c++) {
+                const v = row[c]||'';
+                const hi = v.trim() ? 'has-val' : '';
+                html += `<td class="${hi}">${v}</td>`;
+            }
+            html += '</tr>';
+        });
+        html += '</table></body></html>';
+        w.document.write(html); w.document.close();
+    }).catch(e => alert('Error: '+e.message));
+}
+
+function saveConfigAndReload() {
+    const newId = document.getElementById('spreadsheet-id-input').value.trim();
+    const newSheet = document.getElementById('month-select').value;
+    if (!newId) { alert('Spreadsheet ID tidak boleh kosong!'); return; }
+    currentSpreadsheetId = newId;
+    currentSheetName     = newSheet;
+    localStorage.setItem('ss_id', newId);
+    localStorage.setItem('ss_sheet', newSheet);
+    loadData();
+}
+
+// ============================================================
+// DATE HELPERS
+// ============================================================
+function normalizeDate(s) {
+    if (!s) return '';
+    let c = s.replace(/-/g,'/').trim();
+    const p = c.split('/');
+    if (p.length !== 3) return c;
+    const d = parseInt(p[0]); const m = parseInt(p[1]);
+    const y = p[2].length === 2 ? '20'+p[2] : p[2];
+    return `${d}/${m}/${y}`;
+}
+function formatDateToSheet(yyyymmdd) {
+    if (!yyyymmdd) return '';
+    const [y,m,d] = yyyymmdd.split('-');
+    return `${parseInt(d)}/${parseInt(m)}/${y}`;
+}
+function getEsokHari(yyyymmdd) {
+    const d = new Date(yyyymmdd);
+    d.setDate(d.getDate() + 1);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ============================================================
+// DATE NAVIGATION
+// ============================================================
+function setToday() {
+    const today = new Date();
+    const yyyymmdd = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    document.getElementById('target-date').value = yyyymmdd;
+    refreshKAList();
+}
+
+function previousDay() {
+    const current = document.getElementById('target-date').value;
+    if (!current) return;
+    const d = new Date(current);
+    d.setDate(d.getDate() - 1);
+    const yyyymmdd = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    document.getElementById('target-date').value = yyyymmdd;
+    refreshKAList();
+}
+
+function nextDay() {
+    const current = document.getElementById('target-date').value;
+    if (!current) return;
+    const d = new Date(current);
+    d.setDate(d.getDate() + 1);
+    const yyyymmdd = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    document.getElementById('target-date').value = yyyymmdd;
+    refreshKAList();
+}
+
+// ============================================================
+// SHIFT TAB
+// ============================================================
+function selectShiftTab(shift) {
+    activeShift = shift;
+    ['malam','siang','pagi'].forEach(s => {
+        const tab = document.getElementById('tab-'+s);
+        tab.className = 'shift-tab';
+        if (s === shift) tab.classList.add('active-'+shift);
+    });
+    refreshKAList();
+}
+
+function selectDirection(dir) {
+    activeDir = dir;
+    // Update UI tombol
+    document.getElementById('dir-arr').className = 'dir-btn arr' + (dir==='arr' ? ' active' : '');
+    document.getElementById('dir-dep').className = 'dir-btn dep' + (dir==='dep' ? ' active' : '');
+    // Update data aktif
+    allParsedData = dir === 'arr' ? allParsedArrival : allParsedDeparture;
+    refreshKAList();
+}
+
+// ============================================================
+// KA LIST — tampilkan semua KA dari sheet untuk tanggal dipilih
+// urut sesuai rowIndex (urutan asli sheet)
+// Untuk malam: tampilkan hari ini + esok hari (dengan pemisah)
+// ============================================================
+function getKAForDate(yyyymmdd) {
+    const tgl = normalizeDate(formatDateToSheet(yyyymmdd));
+    return allParsedData
+        .filter(t => normalizeDate(t.tanggal) === tgl)
+        .sort((a,b) => a.rowIndex - b.rowIndex);
+}
+
+function refreshKAList() {
+    const datePicker = document.getElementById('target-date').value;
+    const container  = document.getElementById('ka-list-container');
+    if (!datePicker || allParsedData.length === 0) {
+        container.innerHTML = '<div class="ka-list-empty">Pilih tanggal setelah data dimuat.</div>';
+        return;
+    }
+
+    container.innerHTML = '';
+
+    if (activeShift === 'malam') {
+        // Malam: hari ini + esok hari
+        const hariIni = getKAForDate(datePicker);
+        const esok    = getKAForDate(getEsokHari(datePicker));
+
+        if (hariIni.length === 0 && esok.length === 0) {
+            container.innerHTML = '<div class="ka-list-empty">Tidak ada KA untuk tanggal ini.</div>';
+            return;
+        }
+
+        if (hariIni.length > 0) {
+            const hdr = document.createElement('div');
+            hdr.className = 'esok-header';
+            hdr.textContent = `📅 ${formatDateToSheet(datePicker)} — Awal Malam`;
+            container.appendChild(hdr);
+            hariIni.forEach(t => container.appendChild(makeKAItem(t, 'malam')));
+        }
+        if (esok.length > 0) {
+            const hdr = document.createElement('div');
+            hdr.className = 'esok-header';
+            hdr.textContent = `📅 ${formatDateToSheet(getEsokHari(datePicker))} — Dini Hari`;
+            container.appendChild(hdr);
+            esok.forEach(t => container.appendChild(makeKAItem(t, 'malam')));
+        }
+    } else {
+        const kaList = getKAForDate(datePicker);
+        if (kaList.length === 0) {
+            container.innerHTML = '<div class="ka-list-empty">Tidak ada KA untuk tanggal ini.</div>';
+            return;
+        }
+        kaList.forEach(t => container.appendChild(makeKAItem(t, activeShift)));
+    }
+}
+
+function makeKAItem(train, shift) {
+    const div = document.createElement('div');
+    div.className = 'ka-pick-item';
+    div.dataset.noKA    = train.noKA;
+    div.dataset.tanggal = train.tanggal;
+    div.dataset.shift   = shift;
+
+    const saranaCount = train.saranaList.length;
+    div.innerHTML = `
+        <input type="checkbox" onchange="toggleCheck(this)" />
+        <span class="ka-name">KA ${train.noKA}</span>
+        <span class="ka-detail">${train.stn} · ${train.tanggal}</span>
+        <span class="ka-sarana-count">${saranaCount} sar.</span>
+    `;
+    div.querySelector('input').addEventListener('change', function() {
+        div.classList.toggle('checked', this.checked);
+    });
+    return div;
+}
+
+function toggleCheck(cb) {
+    cb.closest('.ka-pick-item').classList.toggle('checked', cb.checked);
+}
+
+function clearChecks() {
+    document.querySelectorAll('.ka-pick-item input[type=checkbox]').forEach(cb => {
+        cb.checked = false;
+        cb.closest('.ka-pick-item').classList.remove('checked');
+    });
+}
+
+// ============================================================
+// ADD CHECKED KA → BASKET
+// ============================================================
+async function addCheckedToBasket() {
+    const checked = [...document.querySelectorAll('.ka-pick-item input[type=checkbox]:checked')];
+    if (checked.length === 0) { alert('Centang setidaknya satu KA terlebih dahulu.'); return; }
+
+    const shiftType  = activeShift;
+    const datePicker = document.getElementById('target-date').value;
+    const shiftNames = { malam:'Malam', siang:'Siang', pagi:'Pagi' };
+    const shiftLabel = `Dinas ${shiftNames[shiftType]} (${formatDateToSheet(datePicker)})`;
+
+    // Ambil data lengkap tiap KA yang dicentang (urut sesuai urutan di daftar = urutan sheet)
+    const selectedTrains = checked.map(cb => {
+        const item   = cb.closest('.ka-pick-item');
+        const noKA   = item.dataset.noKA;
+        const tanggal = item.dataset.tanggal;
+        // Cari di allParsedData
+        const found = allParsedData.find(t =>
+            t.noKA.toUpperCase() === noKA.toUpperCase() &&
+            normalizeDate(t.tanggal) === normalizeDate(tanggal)
+        );
+        return found || { noKA, tanggal, stn:'-', noLok:'-', saranaList:[], totalTonase:'-' };
+    });
+
+    // Cek duplikat dalam satu shift (noKA sama)
+    const seenKA = new Set();
+    const uniqueTrains = [];
+    selectedTrains.forEach(t => {
+        const key = t.noKA.toUpperCase() + '|' + normalizeDate(t.tanggal);
+        if (!seenKA.has(key)) { seenKA.add(key); uniqueTrains.push(t); }
+    });
+
+    // Jika shift ini sudah ada di basket, tampilkan dialog 3 pilihan
+    const existing = printBasket.find(b => b.shiftType === shiftType);
+    if (existing) {
+        // Dialog custom 3 tombol (Tambahkan / Ganti / Batal)
+        const choice = await showThreeChoiceDialog(shiftNames[shiftType]);
+        if (choice === 'batal') { clearChecks(); return; }
+        if (choice === 'ganti') {
+            printBasket = printBasket.filter(b => b.shiftType !== shiftType);
+        } else { // 'tambah'
+            const existingKeys = new Set(existing.trains.map(t => t.noKA.toUpperCase()+'|'+normalizeDate(t.tanggal)));
+            const newTrains = uniqueTrains.filter(t => !existingKeys.has(t.noKA.toUpperCase()+'|'+normalizeDate(t.tanggal)));
+            const shiftId2 = Date.now();
+            existing.trains.push(...newTrains.map((t,i) => ({...t, uniqueTrainId:`${shiftId2}_add_${i}`})));
+            clearChecks();
+            renderBasket();
+            return;
+        }
+    }
+
+    const shiftId = Date.now();
+    const trainsWithId = uniqueTrains.map((t,i) => ({...t, uniqueTrainId:`${shiftId}_${i}`}));
+    printBasket.push({ id:shiftId, shiftType, label:shiftLabel, trains:trainsWithId });
+    clearChecks();
+    renderBasket();
+    document.getElementById('print-area-a4').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ============================================================
+// RENDER BASKET (3 kolom A4)
+// ============================================================
+function buildTrainHTML(train) {
+    let rows = '', urut = 1;
+    const lok = (train.noLok && train.noLok !== '-') ? `<strong>${train.noLok}</strong>` : '<span style="color:#ccc;">—</span>';
+    rows += `<tr class="lok-row"><td style="color:#aaa;font-style:italic;">Lok</td><td>${lok}</td><td style="color:#aaa;">-</td><td style="color:#aaa;">-</td><td></td></tr>`;
+    train.saranaList.forEach(s => {
+        // Warna background dari spreadsheet (jika ada)
+        const bgStyle = s.bgColor ? `style="background:${s.bgColor} !important;"` : '';
+        const dCls = s.status === 'D' ? 'class="status-d"' : '';
+        const sarStyle = s.sarBgColor ? `style="background:${s.sarBgColor} !important;font-weight:bold;"` : '';
+        rows += `<tr ${bgStyle}><td>${urut++}</td><td ${sarStyle}>${s.noSarana}</td><td ${dCls}>${s.status}</td><td>${s.berat}</td><td>${s.catatan}</td></tr>`;
+    });
+    return `<div class="train-block">
+        <button class="remove-train-btn" onclick="removeTrain('${train.uniqueTrainId}')">✕</button>
+        <div class="train-header-simple">
+            <h4>KA ${train.noKA} (${train.stn})</h4>
+            <span class="train-date">${train.tanggal}</span>
+        </div>
+        <table>
+            <thead><tr><th>#</th><th>Sarana</th><th>TM</th><th>Ton</th><th>Ket.</th></tr></thead>
+            <tbody>
+                ${rows}
+                <tr class="tonase-row">
+                    <td colspan="3" style="text-align:right;">TOTAL</td>
+                    <td class="text-red">${train.totalTonase}</td><td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>`;
+}
+
+function renderBasket() {
+    const empty   = document.getElementById('basket-empty-state');
+    const content = document.getElementById('basket-content');
+    const cols    = { malam: document.getElementById('col-malam'), siang: document.getElementById('col-siang'), pagi: document.getElementById('col-pagi') };
+
+    cols.malam.innerHTML = '<div class="col-slot-empty" id="empty-malam">— Malam —</div>';
+    cols.siang.innerHTML = '<div class="col-slot-empty" id="empty-siang">— Siang —</div>';
+    cols.pagi.innerHTML  = '<div class="col-slot-empty" id="empty-pagi">— Pagi —</div>';
+
+    if (printBasket.length === 0) {
+        empty.style.display = 'block'; content.style.display = 'none'; return;
+    }
+    empty.style.display = 'none'; content.style.display = 'grid';
+
+    printBasket.forEach(shift => {
+        const col = cols[shift.shiftType];
+        if (!col) return;
+        const emp = document.getElementById('empty-'+shift.shiftType);
+        if (emp) emp.remove();
+        col.innerHTML += `<div class="shift-container-block">
+            <button class="remove-shift-btn" onclick="removeShift(${shift.id})">✕ Hapus</button>
+            <div class="shift-title-banner">${shift.label}</div>
+            ${shift.trains.map(t => buildTrainHTML(t)).join('')}
+        </div>`;
+    });
+
+    // Deteksi overflow mode default
+    setTimeout(() => checkOverflow(), 100);
+    // Update mode fleksibel jika sedang aktif
+    if (activeMode === 'flex') setTimeout(() => renderFlexBasket(), 120);
+}
+
+function checkOverflow() {
+    const A4_HEIGHT_PX = 1122; // 297mm pada 96dpi
+    const indicator = document.getElementById('overflow-indicator');
+    if (!indicator) return;
+
+    const colMalam = document.getElementById('col-malam');
+    const colSiang = document.getElementById('col-siang');
+    const colPagi  = document.getElementById('col-pagi');
+    const heights  = [colMalam, colSiang, colPagi].map(c => c ? c.scrollHeight : 0);
+    const maxH     = Math.max(...heights);
+
+    if (maxH > A4_HEIGHT_PX) {
+        const pages = Math.ceil(maxH / A4_HEIGHT_PX);
+        indicator.innerHTML = `⚠️ Konten melebihi 1 halaman (~${pages} lembar). Perkecil font atau kurangi KA.`;
+        indicator.style.display = 'block';
+    } else {
+        indicator.innerHTML = '✅ Konten muat dalam 1 halaman.';
+        indicator.style.display = 'block';
+        setTimeout(() => { indicator.style.display = 'none'; }, 3000);
+    }
+}
+
+function removeShift(id) {
+    printBasket = printBasket.filter(b => b.id !== id);
+    renderBasket();
+}
+function removeTrain(uid) {
+    printBasket.forEach(b => { b.trains = b.trains.filter(t => t.uniqueTrainId !== uid); });
+    printBasket = printBasket.filter(b => b.trains.length > 0);
+    renderBasket();
+}
+function clearBasket() {
+    if (confirm('Kosongkan seluruh lembar cetak?')) {
+        printBasket = [];
+        renderBasket();
+        renderFlexBasket();
+    }
+}
+function changeFontSize(cls) {
+    const el = document.getElementById('print-area-a4');
+    el.classList.remove('font-xs','font-xs2','font-xs3','font-sm','font-md','font-3xs');
+    el.classList.add(cls);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadData();
+</script>
+</body>
+</html>
