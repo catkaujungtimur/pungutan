@@ -410,13 +410,6 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
                 <input type="date" id="target-date" onchange="refreshKAList()" style="flex:1;" />
             </div>
 
-            <!-- Tombol Navigasi Tanggal -->
-            <div style="display:flex;gap:6px;margin-bottom:10px;">
-                <button class="btn btn-ghost" onclick="previousDay()" style="flex:0;padding:6px 8px;font-size:14px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">◀</button>
-                <button class="btn btn-success" onclick="setToday()" style="flex:1;font-size:12px;">📅 Hari Ini</button>
-                <button class="btn btn-ghost" onclick="nextDay()" style="flex:0;padding:6px 8px;font-size:14px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">▶</button>
-            </div>
-
             <!-- Judul -->
             <h3 style="margin-bottom:5px;font-size:12px;">📋 Pilih KA untuk Lembar Cetak</h3>
 
@@ -1349,36 +1342,6 @@ function getEsokHari(yyyymmdd) {
     const d = new Date(yyyymmdd);
     d.setDate(d.getDate() + 1);
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
-// ============================================================
-// DATE NAVIGATION
-// ============================================================
-function setToday() {
-    const today = new Date();
-    const yyyymmdd = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-    document.getElementById('target-date').value = yyyymmdd;
-    refreshKAList();
-}
-
-function previousDay() {
-    const current = document.getElementById('target-date').value;
-    if (!current) return;
-    const d = new Date(current);
-    d.setDate(d.getDate() - 1);
-    const yyyymmdd = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    document.getElementById('target-date').value = yyyymmdd;
-    refreshKAList();
-}
-
-function nextDay() {
-    const current = document.getElementById('target-date').value;
-    if (!current) return;
-    const d = new Date(current);
-    d.setDate(d.getDate() + 1);
-    const yyyymmdd = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    document.getElementById('target-date').value = yyyymmdd;
-    refreshKAList();
 }
 
 // ============================================================
