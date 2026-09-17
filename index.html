@@ -114,13 +114,19 @@ input[type=text] { min-width: 280px; }
     box-shadow: 0 4px 12px rgba(0,0,0,0.12); border: 1px solid #cbd5e0; border-radius: 4px;
 }
 .three-col-grid {
-    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4mm;
+    /* Lebar kolom fixed (bukan 1fr) supaya garis pemisah selalu jatuh
+       PERSIS di 7cm dari tepi kiri & 7cm dari tepi kanan kertas A4 (21cm),
+       cocok dengan lipatan kertas jadi 3 bagian.
+       Area isi halaman = 210mm - (6mm+6mm padding kiri/kanan .a4-page) = 198mm
+       64mm + 70mm + 64mm = 198mm, gap dihilangkan (garis putus-putus di
+       col-siang yang jadi pembatas visualnya). */
+    display: grid; grid-template-columns: 64mm 70mm 64mm; gap: 0;
     width: 100%; min-height: 277mm; align-items: start;
 }
 .col-slot { min-height: 50px; }
-.col-slot.col-malam { grid-column: 1; }
+.col-slot.col-malam { grid-column: 1; padding-right: 2mm; }
 .col-slot.col-siang { grid-column: 2; border-left: 1px dashed #cbd5e0; border-right: 1px dashed #cbd5e0; padding: 0 2mm; }
-.col-slot.col-pagi  { grid-column: 3; }
+.col-slot.col-pagi  { grid-column: 3; padding-left: 2mm; }
 .col-slot-empty { display: flex; align-items: center; justify-content: center; min-height: 200px; color: #e2e8f0; font-size: 10px; text-align: center; }
 
 .shift-container-block { position: relative; }
@@ -351,7 +357,7 @@ td { font-size: 8px; padding: 2px 3px; border-bottom: 1px dotted #e2e8f0; vertic
     .config-panel, .picker-panel, .preview-toolbar, .remove-shift-btn, .remove-train-btn, .col-slot-empty, #overflow-indicator { display: none !important; }
     .workspace { display: block; }
     .a4-page { box-shadow: none; border: none; padding: 0; width: 100%; min-height: auto; }
-    .three-col-grid { min-height: auto; gap: 3mm; }
+    .three-col-grid { min-height: auto; }
     .col-slot.col-siang { border-left: 0.5pt solid #aaa; border-right: 0.5pt solid #aaa; }
     .shift-title-banner { background: #2b6cb0 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .train-block { border: 0.5pt solid #999; margin-bottom: 3px; }
